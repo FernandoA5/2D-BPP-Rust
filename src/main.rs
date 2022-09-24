@@ -13,8 +13,9 @@ fn main() {
         let bins: Bin = obtener_bin_size();
         
         if bins.alto < w_a.alto && bins.ancho < w_a.ancho {
-            //FUNCIONA
-            println!("Todo correcto");
+            //FUNCIONA - A PEDIR LOS ITEMS
+            let mut items: Vec<Bin> = Vec::new();
+
         }
         else {
             println!("Los contenedores no pueden ser más grandes que el area de trabajo");

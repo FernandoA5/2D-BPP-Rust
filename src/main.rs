@@ -6,15 +6,49 @@ struct Bin{
     alto: i32,
     ancho: i32
 }
+struct Item{
+    _alto: i32,
+    _ancho: i32
+}
 //let mut nombres: Vec<String> = Vec::new();        ARRAYLIST
 fn main() {
     loop{
+
         let w_a: WorkArea = obtener_work_area();
         let bins: Bin = obtener_bin_size();
         
         if bins.alto < w_a.alto && bins.ancho < w_a.ancho {
+            //CREAMOS LA MATRIZ DE ESPACIO
+            let mut w_a_space: Vec<Vec<i32>> = Vec::new();
+
+            //INICIALIZAR ESPACIO VACIO
+            for (i, _col) in (0..w_a.alto).enumerate() {
+                for (j, _raw) in (0..w_a.ancho).enumerate(){
+                    //w_a_space[i][j] = 0;
+                    w_a_space.push(Vec::new());
+                    w_a_space[i].push(0)
+                }                    
+            }
+            //MOSTRAMOS LA MATRIZ EN PANTALLA
+            for (i, _col) in (0..w_a.alto).enumerate() {
+                for (j, _raw) in (0..w_a.ancho).enumerate(){
+                    print!("[{}]", w_a_space[i][j]);
+                }                    
+                println!("");
+            }
+            //CALCULAR CANTIDAD DE BINS EN EL WORK_AREA
+
             //FUNCIONA - A PEDIR LOS ITEMS
-            let mut items: Vec<Bin> = Vec::new();
+            let mut _items: Vec<Item> = Vec::new();
+            loop {
+                //CANTIDAD DE ITEMS
+                let items_amout: i32 = get_size("cantidad de items".to_string());
+                //PEDIR ITEMS
+                
+
+
+                println!("cantidad de items: {}", items_amout);
+            }
 
         }
         else {
@@ -31,8 +65,13 @@ fn main() {
     
     //IMPRESIONES
 }
-
-
+fn _obtener_item() -> Item {
+    let item = Item{
+        _alto: 5,
+        _ancho: 5
+    };
+    item
+}
 fn obtener_work_area() -> WorkArea{
     let w_a = WorkArea{
         alto: get_size("alto del espacio de trabajo".to_string()),
@@ -47,7 +86,6 @@ fn obtener_bin_size() -> Bin {
     };
     bins
 }
-
 fn get_size(dato: String) -> i32{
     let stdin = std::io::stdin();
     loop{

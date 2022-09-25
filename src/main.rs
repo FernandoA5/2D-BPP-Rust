@@ -4,9 +4,11 @@ struct Rectangulo {
 }
 //let mut nombres: Vec<String> = Vec::new();        ARRAYLIST
 fn main() {
+    let mut w_a: Rectangulo;
+    let mut bins: Rectangulo;
     loop{
-        let w_a: Rectangulo = obtener_rectangulo();
-        let bins: Rectangulo = obtener_rectangulo();
+        w_a= obtener_rectangulo();
+        bins= obtener_rectangulo();
         
         if bins.alto < w_a.alto && bins.ancho < w_a.ancho {
             //CREAMOS LA MATRIZ DE ESPACIO VACIO
@@ -19,17 +21,14 @@ fn main() {
 
             println!("Caben  {} Bins a lo ancho", amount_bins_ancho);
             println!("Caben  {} Bins a lo alto", amount_bins_alto);
-
             //ESTA ES LA CANTIDAD DE BINS QUE CABEN EN EL WORK AREA
-            //let amount_bins = amount_bins_ancho*amount_bins_alto;
-            
-
+            let _amount_bins = amount_bins_ancho*amount_bins_alto;
             //LLENAMOS EL ARREGLO DEL WORK AREA CON EL NUMERO DEL BIN PARA VIZUALIZARLOS
             llenar_arreglo_con_bins(&mut wa_space_array, &bins, amount_bins_alto, amount_bins_ancho);
             
-            
+            //MOSTRAR BINS EN EL WORK AREA
             mostrar_array(&wa_space_array, &w_a);
-            //mostrar Bins En el Work Area
+            
 
 
             //FUNCIONA - A PEDIR LOS ITEMS

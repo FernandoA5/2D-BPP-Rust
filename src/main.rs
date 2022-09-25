@@ -21,29 +21,13 @@ fn main() {
             println!("Caben  {} Bins a lo alto", amount_bins_alto);
 
             //ESTA ES LA CANTIDAD DE BINS QUE CABEN EN EL WORK AREA
-            //let amount_bins = cmp::min(amount_bins_alto, amount_bins_ancho);
-            let amount_bins = amount_bins_ancho*amount_bins_alto;
+            //let amount_bins = amount_bins_ancho*amount_bins_alto;
             
 
             //LLENAMOS EL ARREGLO DEL WORK AREA CON EL NUMERO DEL BIN PARA VIZUALIZARLOS
-         
-            let mut contador:i32=0;
-            for i in 0..amount_bins_alto {
-                for j in 0..amount_bins_ancho { 
-
-                    contador+=1;
-                    for k in 0..bins.alto {
-                        let k_i:i32 = k+(bins.alto*i);
-                        for l in 0..bins.ancho { 
-                            let l_i:i32 = l+(bins.ancho*j);
-                            
-                            wa_space_array[k_i as usize][l_i as usize] = contador;
-        
-                        }              
-                    }       
-
-                }              
-            }
+            llenar_arreglo_con_bins(&mut wa_space_array, &bins, amount_bins_alto, amount_bins_ancho);
+            
+            
             mostrar_array(&wa_space_array, &w_a);
             //mostrar Bins En el Work Area
 
@@ -72,7 +56,25 @@ fn main() {
     
     //IMPRESIONES
 }
+fn llenar_arreglo_con_bins(wa_space_array: &mut Vec<Vec<i32>>, bins: &Rectangulo, amount_bins_alto:i32, amount_bins_ancho: i32){
+    let mut contador:i32=0;
+            for i in 0..amount_bins_alto {
+                for j in 0..amount_bins_ancho { 
 
+                    contador+=1;
+                    for k in 0..bins.alto {
+                        let k_i:i32 = k+(bins.alto*i);
+                        for l in 0..bins.ancho { 
+                            let l_i:i32 = l+(bins.ancho*j);
+                            
+                            wa_space_array[k_i as usize][l_i as usize] = contador;
+        
+                        }              
+                    }       
+
+                }              
+            }
+}
 fn inicializar_space_array(w_a: &Rectangulo)->Vec<Vec<i32>>{
     let mut w_a_space: Vec<Vec<i32>> = Vec::new();
     for (i, _col) in (0..w_a.alto).enumerate() {

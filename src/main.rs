@@ -39,27 +39,8 @@ fn main() {
             mostrar_array(&wa_space_array, &w_a);
 
             //FUNCIONA - A PEDIR LOS ITEMS
-            let mut items: Vec<Rectangulo> = Vec::new();
-                    
-            //CANTIDAD DE ITEMS
-            let items_amout: i32 = get_size("cantidad de items".to_string());
-            //SI EL USUARIO INGRESÓ UNA CANTIDAD VALIDA DE ITEMS
-            if items_amout > 0 {
-                let mut i =0;
-                //PEDIMOS LOS ITEMS
-                while i < items_amout {
-                    let rec: Rectangulo = obtener_rectangulo(( "rectangulo ".to_string()+&(i+1).to_string()+":" ).to_string());
-                    //SI EL ITEM CABE EN EL BIN SE AGREGA
-                    if rec.alto <= bins.alto && rec.ancho <= bins.ancho {
-                        items.push(rec);
-                        i+=1;
-                    }
-                    //SI NO, SE PIDE DE NUEVO
-                    else{
-                        println!("El alto y ancho del item debe ser menor que el de el contenedor");
-                    }
-                }  
-            }
+            let mut items: Vec<Rectangulo> = pedir_items(&bins);
+             
         }
         else {
             println!("Los contenedores no pueden ser más grandes que el area de trabajo");
@@ -74,6 +55,29 @@ fn main() {
     //OBTENEMOS LOS ITEMS
     
     //IMPRESIONES
+}
+fn pedir_items(bins: &Rectangulo)->Vec<Rectangulo>{
+    //CANTIDAD DE ITEMS
+    let mut items: Vec<Rectangulo> = Vec::new();
+    let items_amout: i32 = get_size("cantidad de items".to_string());
+    //SI EL USUARIO INGRESÓ UNA CANTIDAD VALIDA DE ITEMS
+    if items_amout > 0 {
+        let mut i =0;
+        //PEDIMOS LOS ITEMS
+        while i < items_amout {
+            let rec: Rectangulo = obtener_rectangulo(( "rectangulo ".to_string()+&(i+1).to_string()+":" ).to_string());
+            //SI EL ITEM CABE EN EL BIN SE AGREGA
+            if rec.alto <= bins.alto && rec.ancho <= bins.ancho {
+                items.push(rec);
+                i+=1;
+            }
+            //SI NO, SE PIDE DE NUEVO
+            else{
+                println!("El alto y ancho del item debe ser menor que el de el contenedor");
+            }
+        }  
+    }
+    items
 }
 fn llenar_arreglo_con_bins(wa_space_array: &mut Vec<Vec<i32>>, bins: &Rectangulo, amount_bins_alto:i32, amount_bins_ancho: i32){
     let mut contador:i32=0;
@@ -146,6 +150,7 @@ fn get_size(dato: String) -> i32{
     }
 
 }
+
 /*fn ordenar_items(items: Vec<Rectangulo>)->Vec<Rectangulo>{
     let mut items_ordenados: Vec<&Rectangulo>;
     

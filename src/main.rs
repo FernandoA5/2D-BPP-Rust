@@ -26,24 +26,23 @@ fn main() {
             
 
             //LLENAMOS EL ARREGLO DEL WORK AREA CON EL NUMERO DEL BIN PARA VIZUALIZARLOS
-            let mut j_w_a: i32;
-            let mut k_w_a: i32;
-            
-            for i in 0..amount_bins {
+         
+            let mut contador:i32=0;
+            for i in 0..amount_bins_alto {
+                for j in 0..amount_bins_ancho { 
 
-                for j in 0..bins.alto {
-                    //j_w_a = j+(i%bins.alto*bins.alto);
-                    j_w_a = j+((i%(bins.alto))*bins.alto);
-                    
+                    contador+=1;
+                    for k in 0..bins.alto {
+                        let k_i:i32 = k+(bins.alto*i);
+                        for l in 0..bins.ancho { 
+                            let l_i:i32 = l+(bins.ancho*j);
+                            
+                            wa_space_array[k_i as usize][l_i as usize] = contador;
+        
+                        }              
+                    }       
 
-                    for k in 0..bins.ancho{
-                        //k_w_a = k+(i%bins.ancho*bins.ancho);
-                        k_w_a = k+((i%(bins.ancho)) * bins.ancho);
-                        println!("I: {} = j_w_a: {} | {}, k_w_a: {} | {}", i, j_w_a, j, k_w_a, k);
-                        //wa_space_array[j_w_a as usize][k_w_a as usize] = i+1;
-                        //  mostrar_array(&wa_space_array, &w_a);
-                    }
-                }
+                }              
             }
             mostrar_array(&wa_space_array, &w_a);
             //mostrar Bins En el Work Area

@@ -1,14 +1,24 @@
+
 struct Rectangulo {
     alto: i32,
-    ancho: i32
+    ancho: i32,
+    area: i32
+}
+impl Rectangulo{
+    fn obtener_area(&self)->i32{
+        self.alto * self.ancho
+    }
 }
 //let mut nombres: Vec<String> = Vec::new();        ARRAYLIST
 fn main() {
-    let mut w_a: Rectangulo;
-    let mut bins: Rectangulo;
     loop{
-        w_a= obtener_rectangulo();
-        bins= obtener_rectangulo();
+        //std::process::Command::new("clear").status().unwrap();
+        println!("IMPLEMENTACIÓN 2D BPP");
+        let w_a: Rectangulo = obtener_rectangulo("area de trabajo:".to_string());
+        let bins: Rectangulo = obtener_rectangulo("area de trabajo:".to_string());
+
+        //let w_a:Rectangulo= Rectangulo{ alto: 15, ancho: 10};
+        //let bins:Rectangulo= Rectangulo {alto: 6, ancho: 5};
         
         if bins.alto < w_a.alto && bins.ancho < w_a.ancho {
             //CREAMOS LA MATRIZ DE ESPACIO VACIO
@@ -21,25 +31,35 @@ fn main() {
 
             println!("Caben  {} Bins a lo ancho", amount_bins_ancho);
             println!("Caben  {} Bins a lo alto", amount_bins_alto);
-            //ESTA ES LA CANTIDAD DE BINS QUE CABEN EN EL WORK AREA
-            let _amount_bins = amount_bins_ancho*amount_bins_alto;
+
             //LLENAMOS EL ARREGLO DEL WORK AREA CON EL NUMERO DEL BIN PARA VIZUALIZARLOS
             llenar_arreglo_con_bins(&mut wa_space_array, &bins, amount_bins_alto, amount_bins_ancho);
             
             //MOSTRAR BINS EN EL WORK AREA
             mostrar_array(&wa_space_array, &w_a);
-            
-
 
             //FUNCIONA - A PEDIR LOS ITEMS
-            let mut _items: Vec<Rectangulo> = Vec::new();
-            //loop {
-                //CANTIDAD DE ITEMS
-                //let items_amout: i32 = get_size("cantidad de items".to_string());
-                //PEDIR ITEMS
-                //println!("cantidad de items: {}", items_amout);
-            //}
-            break;
+            let mut items: Vec<Rectangulo> = Vec::new();
+                    
+            //CANTIDAD DE ITEMS
+            let items_amout: i32 = get_size("cantidad de items".to_string());
+            //SI EL USUARIO INGRESÓ UNA CANTIDAD VALIDA DE ITEMS
+            if items_amout > 0 {
+                let mut i =0;
+                //PEDIMOS LOS ITEMS
+                while i < items_amout {
+                    let rec: Rectangulo = obtener_rectangulo(( "rectangulo ".to_string()+&(i+1).to_string()+":" ).to_string());
+                    //SI EL ITEM CABE EN EL BIN SE AGREGA
+                    if rec.alto <= bins.alto && rec.ancho <= bins.ancho {
+                        items.push(rec);
+                        i+=1;
+                    }
+                    //SI NO, SE PIDE DE NUEVO
+                    else{
+                        println!("El alto y ancho del item debe ser menor que el de el contenedor");
+                    }
+                }  
+            }
         }
         else {
             println!("Los contenedores no pueden ser más grandes que el area de trabajo");
@@ -93,11 +113,13 @@ fn mostrar_array(array: &Vec<Vec<i32>>, w_a: &Rectangulo){
         println!("");
     }
 }
-fn obtener_rectangulo() -> Rectangulo{
+fn obtener_rectangulo(dato: String) -> Rectangulo{
     let w_a = Rectangulo{
-        alto: get_size("alto del espacio de trabajo".to_string()),
-        ancho: get_size("ancho del espacio de trabajo".to_string())
+        alto: get_size(("alto del ".to_string()+&dato).to_string()),
+        ancho: get_size(("ancho del ".to_string()+&dato).to_string()),
+        area: 0
     };
+    w_a.obtener_area();
     w_a
 }
 fn get_size(dato: String) -> i32{
@@ -124,5 +146,15 @@ fn get_size(dato: String) -> i32{
     }
 
 }
+/*fn ordenar_items(items: Vec<Rectangulo>)->Vec<Rectangulo>{
+    let mut items_ordenados: Vec<&Rectangulo>;
+    
+    for i in 0..items.len()
+    {
+        items_ordenados.push(&items[i])
+    }
 
+
+    items_ordenados
+}*/
 

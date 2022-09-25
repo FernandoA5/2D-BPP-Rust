@@ -1,55 +1,59 @@
-struct WorkArea {
+
+struct Rectangulo {
     alto: i32,
     ancho: i32
-}
-struct Bin{
-    alto: i32,
-    ancho: i32
-}
-struct Item{
-    _alto: i32,
-    _ancho: i32
 }
 //let mut nombres: Vec<String> = Vec::new();        ARRAYLIST
 fn main() {
     loop{
-
-        let w_a: WorkArea = obtener_work_area();
-        let bins: Bin = obtener_bin_size();
+        let w_a: Rectangulo = obtener_rectangulo();
+        let bins: Rectangulo = obtener_rectangulo();
         
         if bins.alto < w_a.alto && bins.ancho < w_a.ancho {
-            //CREAMOS LA MATRIZ DE ESPACIO
-            let mut w_a_space: Vec<Vec<i32>> = Vec::new();
-
-            //INICIALIZAR ESPACIO VACIO
-            for (i, _col) in (0..w_a.alto).enumerate() {
-                for (j, _raw) in (0..w_a.ancho).enumerate(){
-                    //w_a_space[i][j] = 0;
-                    w_a_space.push(Vec::new());
-                    w_a_space[i].push(0)
-                }                    
-            }
-            //MOSTRAMOS LA MATRIZ EN PANTALLA
-            for (i, _col) in (0..w_a.alto).enumerate() {
-                for (j, _raw) in (0..w_a.ancho).enumerate(){
-                    print!("[{}]", w_a_space[i][j]);
-                }                    
-                println!("");
-            }
+            //CREAMOS LA MATRIZ DE ESPACIO VACIO
+            let mut wa_space_array: Vec<Vec<i32>> = inicializar_space_array(&w_a);
+                                 
             //CALCULAR CANTIDAD DE BINS EN EL WORK_AREA
+                //Bins = TamañoWA/TamañoBins
+            let amount_bins_ancho:i32= w_a.ancho / bins.ancho;
+            let amount_bins_alto: i32 = w_a.alto / bins.alto;
+
+            println!("Bins ancho: {}", amount_bins_ancho);
+            println!("Bins alto: {}", amount_bins_alto);
+
+            //ESTA ES LA CANTIDAD DE BINS QUE CABEN EN EL WORK AREA
+            //let amount_bins = cmp::min(amount_bins_alto, amount_bins_ancho);
+            let amount_bins = amount_bins_ancho*amount_bins_alto;
+
+
+            //LLENAMOS EL ARREGLO DEL WORK AREA CON EL NUMERO DEL BIN PARA VIZUALIZARLOS
+            let mut j_w_a: i32;
+            let mut k_w_a: i32;
+            
+            for i in 0..amount_bins {
+
+                for j in 0..bins.alto {
+                    j_w_a = j+(i%bins.alto*bins.alto);
+
+                    for k in 0..bins.ancho{
+                        k_w_a = k+((i%bins.ancho*bins.ancho));
+                        wa_space_array[j_w_a as usize][k_w_a as usize] = i+1;
+                    }
+                }
+            }
+            mostrar_array(wa_space_array, &w_a);
+            //mostrar Bins En el Work Area
+
 
             //FUNCIONA - A PEDIR LOS ITEMS
-            let mut _items: Vec<Item> = Vec::new();
-            loop {
+            let mut _items: Vec<Rectangulo> = Vec::new();
+            //loop {
                 //CANTIDAD DE ITEMS
-                let items_amout: i32 = get_size("cantidad de items".to_string());
+                //let items_amout: i32 = get_size("cantidad de items".to_string());
                 //PEDIR ITEMS
-                
-
-
-                println!("cantidad de items: {}", items_amout);
-            }
-
+                //println!("cantidad de items: {}", items_amout);
+            //}
+            break;
         }
         else {
             println!("Los contenedores no pueden ser más grandes que el area de trabajo");
@@ -65,26 +69,32 @@ fn main() {
     
     //IMPRESIONES
 }
-fn _obtener_item() -> Item {
-    let item = Item{
-        _alto: 5,
-        _ancho: 5
-    };
-    item
+
+fn inicializar_space_array(w_a: &Rectangulo)->Vec<Vec<i32>>{
+    let mut w_a_space: Vec<Vec<i32>> = Vec::new();
+    for (i, _col) in (0..w_a.alto).enumerate() {
+        for (_j, _raw) in (0..w_a.ancho).enumerate(){
+            //w_a_space[i][j] = 0;
+            w_a_space.push(Vec::new());
+            w_a_space[i].push(0)
+        }                    
+    }
+    w_a_space
 }
-fn obtener_work_area() -> WorkArea{
-    let w_a = WorkArea{
+fn mostrar_array(array: Vec<Vec<i32>>, w_a: &Rectangulo){
+    for (i, _col) in (0..w_a.alto).enumerate() {
+        for (j, _raw) in (0..w_a.ancho).enumerate(){
+            print!("[{}]", array[i][j]);
+        }                    
+        println!("");
+    }
+}
+fn obtener_rectangulo() -> Rectangulo{
+    let w_a = Rectangulo{
         alto: get_size("alto del espacio de trabajo".to_string()),
         ancho: get_size("ancho del espacio de trabajo".to_string())
     };
     w_a
-}
-fn obtener_bin_size() -> Bin {
-    let bins = Bin{
-        alto: get_size("alto del contenedro".to_string()),
-        ancho: get_size("ancho del contenedor".to_string())
-    };
-    bins
 }
 fn get_size(dato: String) -> i32{
     let stdin = std::io::stdin();

@@ -6,7 +6,6 @@ fn main() {
     loop{
         //std::process::Command::new("clear").status().unwrap();
         println!("\nIMPLEMENTACIÓN 2D BPP");
-
         // let w_a: Rectangulo = obtener_rectangulo("area de trabajo:".to_string());
         // let bins: Rectangulo = obtener_rectangulo("contenedor:".to_string());
 
@@ -15,7 +14,7 @@ fn main() {
         
         if bins.alto < w_a.alto && bins.ancho < w_a.ancho {
             //CREAMOS LA MATRIZ DE ESPACIO VACIO
-            let mut wa_space_array: Vec<Vec<i32>> = inicializar_space_array(&w_a);
+            let mut wa_space_array: Vec<Vec<char>> = inicializar_space_array(&w_a);
                                  
             //CALCULAR CANTIDAD DE BINS EN EL WORK_AREA
                 //Bins = TamañoWA/TamañoBins
@@ -33,11 +32,14 @@ fn main() {
 
             //FUNCIONA - A PEDIR LOS ITEMS
             let mut items: Vec<Rec> = pedir_items(&bins);
+            println!("Items sin ordenar:");
             imprimir_items(&items);
             println!("Ordenando items...");
             //ORDENAR ITEMS DE MAYOR A MENOR
             ordenar_items(&mut items);
             imprimir_items(&items);
+            
+            //
 
             
         }
@@ -47,7 +49,7 @@ fn main() {
         println!("Work_Area: {}, {}", w_a.alto, w_a.ancho);
         println!("Bins size: {}, {}", bins.alto, bins.ancho);
 
-        std::process::Command::new("pause").status().unwrap();
+        
     }    
 }
 fn pedir_items(bins: &Rec)->Vec<Rec>{
@@ -73,8 +75,8 @@ fn pedir_items(bins: &Rec)->Vec<Rec>{
     }
     items
 }
-fn llenar_arreglo_con_bins(wa_space_array: &mut Vec<Vec<i32>>, bins: &Rec, amount_bins_alto:i32, amount_bins_ancho: i32){
-    let mut contador:i32=0;
+fn llenar_arreglo_con_bins(wa_space_array: &mut Vec<Vec<char>>, bins: &Rec, amount_bins_alto:i32, amount_bins_ancho: i32){
+    let mut contador:u32=64;
             for i in 0..amount_bins_alto {
                 for j in 0..amount_bins_ancho { 
 
@@ -84,7 +86,7 @@ fn llenar_arreglo_con_bins(wa_space_array: &mut Vec<Vec<i32>>, bins: &Rec, amoun
                         for l in 0..bins.ancho { 
                             let l_i:i32 = l+(bins.ancho*j);
                             
-                            wa_space_array[k_i as usize][l_i as usize] = contador;
+                            wa_space_array[k_i as usize][l_i as usize] = char::from_u32(contador).unwrap();
         
                         }              
                     }       
@@ -92,18 +94,18 @@ fn llenar_arreglo_con_bins(wa_space_array: &mut Vec<Vec<i32>>, bins: &Rec, amoun
                 }              
             }
 }
-fn inicializar_space_array(w_a: &Rec)->Vec<Vec<i32>>{
-    let mut w_a_space: Vec<Vec<i32>> = Vec::new();
+fn inicializar_space_array(w_a: &Rec)->Vec<Vec<char>>{
+    let mut w_a_space: Vec<Vec<char>> = Vec::new();
     for (i, _col) in (0..w_a.alto).enumerate() {
         for (_j, _raw) in (0..w_a.ancho).enumerate(){
             //w_a_space[i][j] = 0;
             w_a_space.push(Vec::new());
-            w_a_space[i].push(0)
+            w_a_space[i].push(char::from_u32(48).unwrap())
         }                    
     }
     w_a_space
 }
-fn mostrar_array(array: &Vec<Vec<i32>>, w_a: &Rec){
+fn mostrar_array(array: &Vec<Vec<char>>, w_a: &Rec){
     for (i, _col) in (0..w_a.alto).enumerate() {
         for (j, _raw) in (0..w_a.ancho).enumerate(){
             print!("[{}]", array[i][j]);

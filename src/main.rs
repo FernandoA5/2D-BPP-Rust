@@ -1,11 +1,12 @@
-pub mod Rectangulo;
+pub mod rectangulo;
 
-use Rectangulo::Rectangulo as Rec;
+use rectangulo::Rectangulo as Rec;
 //let mut nombres: Vec<String> = Vec::new();        ARRAYLIST
 fn main() {
     loop{
         //std::process::Command::new("clear").status().unwrap();
         println!("\nIMPLEMENTACIÓN 2D BPP");
+
         // let w_a: Rectangulo = obtener_rectangulo("area de trabajo:".to_string());
         // let bins: Rectangulo = obtener_rectangulo("contenedor:".to_string());
 
@@ -39,7 +40,7 @@ fn main() {
             ordenar_items(&mut items);
             imprimir_items(&items);
             
-            //
+            //COMENZAR A ALMACENAR LOS ITEMS EN LOS CONTENEDORES
 
             
         }
@@ -51,6 +52,14 @@ fn main() {
 
         
     }    
+}
+fn colocar_items(items: &Vec<Rec>, wa_space_array: &mut Vec<Vec<char>>, bins: Rec){
+    let mut indice: (usize, usize) = (0 , 0);
+    let mut tam_cont:(i32, i32) = (bins.alto, bins.ancho);
+    let mut disponible: Vec<(i32, i32)> = Vec::new();
+    for i in 0..items.len() { //RECORREMOS LOS ITEMS
+        disponible.push((tam_cont.0 - indice.0 as i32,  tam_cont.1 - indice.1 as i32));
+    }
 }
 fn pedir_items(bins: &Rec)->Vec<Rec>{
     //CANTIDAD DE ITEMS

@@ -1,24 +1,17 @@
+pub mod Rectangulo;
 
-struct Rectangulo {
-    alto: i32,
-    ancho: i32,
-    area: i32
-}
-impl Rectangulo{
-    fn obtener_area(&self)->i32{
-        self.alto * self.ancho
-    }
-}
+use Rectangulo::Rectangulo as Rec;
 //let mut nombres: Vec<String> = Vec::new();        ARRAYLIST
 fn main() {
     loop{
         //std::process::Command::new("clear").status().unwrap();
-        println!("IMPLEMENTACIÓN 2D BPP");
-        let w_a: Rectangulo = obtener_rectangulo("area de trabajo:".to_string());
-        let bins: Rectangulo = obtener_rectangulo("area de trabajo:".to_string());
+        println!("\nIMPLEMENTACIÓN 2D BPP");
 
-        //let w_a:Rectangulo= Rectangulo{ alto: 15, ancho: 10};
-        //let bins:Rectangulo= Rectangulo {alto: 6, ancho: 5};
+        // let w_a: Rectangulo = obtener_rectangulo("area de trabajo:".to_string());
+        // let bins: Rectangulo = obtener_rectangulo("contenedor:".to_string());
+
+        let w_a:Rec= Rec{ alto: 15, ancho: 10, area: 150};
+        let bins:Rec= Rec {alto: 6, ancho: 5, area: 30};
         
         if bins.alto < w_a.alto && bins.ancho < w_a.ancho {
             //CREAMOS LA MATRIZ DE ESPACIO VACIO
@@ -39,33 +32,34 @@ fn main() {
             mostrar_array(&wa_space_array, &w_a);
 
             //FUNCIONA - A PEDIR LOS ITEMS
-            let mut items: Vec<Rectangulo> = pedir_items(&bins);
-             
+            let mut items: Vec<Rec> = pedir_items(&bins);
+            imprimir_items(&items);
+            println!("Ordenando items...");
+            //ORDENAR ITEMS DE MAYOR A MENOR
+            ordenar_items(&mut items);
+            imprimir_items(&items);
+
+            
         }
         else {
             println!("Los contenedores no pueden ser más grandes que el area de trabajo");
         }
         println!("Work_Area: {}, {}", w_a.alto, w_a.ancho);
         println!("Bins size: {}, {}", bins.alto, bins.ancho);
-    }
-    //OBTENEMOS EL TAMAÑO DE EL AREA DE TRABAJO
-    
-    //OBTENEMOS EL TAMAÑO DE LOS BINS
-    
-    //OBTENEMOS LOS ITEMS
-    
-    //IMPRESIONES
+
+        std::process::Command::new("pause").status().unwrap();
+    }    
 }
-fn pedir_items(bins: &Rectangulo)->Vec<Rectangulo>{
+fn pedir_items(bins: &Rec)->Vec<Rec>{
     //CANTIDAD DE ITEMS
-    let mut items: Vec<Rectangulo> = Vec::new();
+    let mut items: Vec<Rec> = Vec::new();
     let items_amout: i32 = get_size("cantidad de items".to_string());
     //SI EL USUARIO INGRESÓ UNA CANTIDAD VALIDA DE ITEMS
     if items_amout > 0 {
         let mut i =0;
         //PEDIMOS LOS ITEMS
         while i < items_amout {
-            let rec: Rectangulo = obtener_rectangulo(( "rectangulo ".to_string()+&(i+1).to_string()+":" ).to_string());
+            let rec: Rec = obtener_rectangulo(( "rectangulo ".to_string()+&(i+1).to_string()+":" ).to_string());
             //SI EL ITEM CABE EN EL BIN SE AGREGA
             if rec.alto <= bins.alto && rec.ancho <= bins.ancho {
                 items.push(rec);
@@ -79,7 +73,7 @@ fn pedir_items(bins: &Rectangulo)->Vec<Rectangulo>{
     }
     items
 }
-fn llenar_arreglo_con_bins(wa_space_array: &mut Vec<Vec<i32>>, bins: &Rectangulo, amount_bins_alto:i32, amount_bins_ancho: i32){
+fn llenar_arreglo_con_bins(wa_space_array: &mut Vec<Vec<i32>>, bins: &Rec, amount_bins_alto:i32, amount_bins_ancho: i32){
     let mut contador:i32=0;
             for i in 0..amount_bins_alto {
                 for j in 0..amount_bins_ancho { 
@@ -98,7 +92,7 @@ fn llenar_arreglo_con_bins(wa_space_array: &mut Vec<Vec<i32>>, bins: &Rectangulo
                 }              
             }
 }
-fn inicializar_space_array(w_a: &Rectangulo)->Vec<Vec<i32>>{
+fn inicializar_space_array(w_a: &Rec)->Vec<Vec<i32>>{
     let mut w_a_space: Vec<Vec<i32>> = Vec::new();
     for (i, _col) in (0..w_a.alto).enumerate() {
         for (_j, _raw) in (0..w_a.ancho).enumerate(){
@@ -109,7 +103,7 @@ fn inicializar_space_array(w_a: &Rectangulo)->Vec<Vec<i32>>{
     }
     w_a_space
 }
-fn mostrar_array(array: &Vec<Vec<i32>>, w_a: &Rectangulo){
+fn mostrar_array(array: &Vec<Vec<i32>>, w_a: &Rec){
     for (i, _col) in (0..w_a.alto).enumerate() {
         for (j, _raw) in (0..w_a.ancho).enumerate(){
             print!("[{}]", array[i][j]);
@@ -117,8 +111,8 @@ fn mostrar_array(array: &Vec<Vec<i32>>, w_a: &Rectangulo){
         println!("");
     }
 }
-fn obtener_rectangulo(dato: String) -> Rectangulo{
-    let w_a = Rectangulo{
+fn obtener_rectangulo(dato: String) -> Rec{
+    let mut w_a = Rec{
         alto: get_size(("alto del ".to_string()+&dato).to_string()),
         ancho: get_size(("ancho del ".to_string()+&dato).to_string()),
         area: 0
@@ -150,16 +144,20 @@ fn get_size(dato: String) -> i32{
     }
 
 }
-
-/*fn ordenar_items(items: Vec<Rectangulo>)->Vec<Rectangulo>{
-    let mut items_ordenados: Vec<&Rectangulo>;
-    
-    for i in 0..items.len()
-    {
-        items_ordenados.push(&items[i])
+fn ordenar_items(items: &mut Vec<Rec>){
+    let mut aux:Rec;
+    for i in 0..items.len(){
+        for j in 0..items.len(){
+            if items[i].area > items[j].area{
+                aux = items[j].clone();
+                items[j]=items[i].clone();
+                items[i]=aux.clone();
+            }
+        }
     }
-
-
-    items_ordenados
-}*/
-
+}
+fn imprimir_items(items: &Vec<Rec>){
+    for i in 0..items.len(){
+        println!("H: {}, W: {}, A:{}", items[i].alto, items[i].ancho, items[i].area);
+    }
+}

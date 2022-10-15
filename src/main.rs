@@ -9,7 +9,7 @@ fn main() {
 
         // let w_a: Rectangulo = obtener_rectangulo("area de trabajo:".to_string());
         // let bins: Rectangulo = obtener_rectangulo("contenedor:".to_string());
-
+            //DATOS POR DEFECTO PARA LAS PRUEBAS
         let w_a:Rec= Rec{ alto: 15, ancho: 10, area: 150};
         let bins:Rec= Rec {alto: 6, ancho: 5, area: 30};
         
@@ -59,7 +59,7 @@ fn colocar_items(items: &Vec<Rec>, bins: &Rec, cant_bins: i32, mut bins_array: V
     for _i in 0..cant_bins{
         bins_array.push(inicializar_space_array(&bins))
     }
-    //RECORREMOS LOS ITEMS
+    //RECORREMOS LOS ITEMS Y ACOMODAMOS UNO POR UNO
     for i in 0..items.len() { 
         acomodar(bins.clone(), cant_bins, &bins_array, items, i);
     }
@@ -84,8 +84,7 @@ fn acomodar(bins: Rec, cant_bins: i32, bins_array: &Vec<Vec<Vec<char>>>, items: 
         }
         //REVISAR QUE LOS ESPACIOS VACIÓS SEAN USABLES POR EL ITEM
 
-        //RECORREMOS LOS ESPACIOS DISPONBIES, MENOS LOS ÚLTIMOS (AREA DEL RECTANGULO) PORQUE COMPARAMOS CADA I CON SUS (AREA DEL RECTANGULO) SIGUIENTES
-
+            //RECORREMOS LOS ESPACIOS DISPONBIES, MENOS LOS ÚLTIMOS (AREA DEL RECTANGULO) PORQUE COMPARAMOS CADA I CON SUS (AREA DEL RECTANGULO) SIGUIENTES
         for i in 0..(disp.len()-(items[indice].area) as usize){
             //CADA ITERACIÓN ES UN POSIBLE LUGAR DONDE PONER EL ITEM
             println!("\nContenedor: {} | Desde: {}", b, i);
@@ -94,13 +93,12 @@ fn acomodar(bins: Rec, cant_bins: i32, bins_array: &Vec<Vec<Vec<char>>>, items: 
                 // C/ITERACIÓN ES UN INDICE SIGUIENTE DEL ITEM DESDE EL INDICE i
 
                 //ESTO NOS GENERA LOS INDICES QUE DEBERÍAN ESTAR DISPONIBLES PARA GUARDAR EL ITEM PARTIENDO DESDE I
+                
                 //A PARTIR DE UN SOLO INDICE
-
-                //DEBEN SER CONTIGUOS LOS ESPACIOS DEL ANCHO
+                    //DEBEN SER CONTIGUOS LOS ESPACIOS DEL ANCHO
                 let desde:f64 = i as f64;
                 let len_f64:f64 = bins.ancho as f64;
                 let condicion: usize = (desde % len_f64).floor() as usize; //SE REINICIA A CERO CADA QUE CAMBIA DE FILA
-
                 if condicion + items[indice].ancho as usize <= bins.ancho as usize { 
                     let an_i: f64 = items[indice].ancho as f64; 
                     let jump_fl:f64 = (j as f64 / an_i as f64).floor();
@@ -113,6 +111,13 @@ fn acomodar(bins: Rec, cant_bins: i32, bins_array: &Vec<Vec<Vec<char>>>, items: 
                 else{
                     println!("esto sucede cuando: los espacios no son contiguos");
                 }
+                //NICE: AHORA NECESITAMOS QUE NOS GENERE LOS ESPACIOS DISPONIBLES A PARTIR DE 2 INDICES
+                    //OBTENEMOS LOS 2 INDICES A PARTIR DEL NUMERO DE 1 INDICE   
+                    //COMPROBAMOS QUE ESAS DIRECCIONES ESTÉN DISPONIBLES
+                        //SI ESTAN DISPONIBLES LO INSERTAMOS
+                            //SI LO INSERTAMOS, PONEMOS UNA VARIABLE BOOL DE INSERTADO
+                        //SI NO, PASAMOS A LA SIGUIENTE POSIBLE POSICIÓN
+                        //SI NO SE PUDO INSERTAR EN NINGUNA POSICIÓN, PASAMOS AL SIGUIENTE CONTENEDOR
             }
         }
     }

@@ -95,29 +95,31 @@ fn acomodar(bins: Rec, cant_bins: i32, bins_array: &Vec<Vec<Vec<char>>>, items: 
                 //ESTO NOS GENERA LOS INDICES QUE DEBERÍAN ESTAR DISPONIBLES PARA GUARDAR EL ITEM PARTIENDO DESDE I
                 
                 //A PARTIR DE UN SOLO INDICE
-                    //DEBEN SER CONTIGUOS LOS ESPACIOS DEL ANCHO
                 let desde:f64 = i as f64;
                 let len_f64:f64 = bins.ancho as f64;
                 let condicion: usize = (desde % len_f64).floor() as usize; //SE REINICIA A CERO CADA QUE CAMBIA DE FILA
-                if condicion + items[indice].ancho as usize <= bins.ancho as usize { 
+                if condicion + items[indice].ancho as usize <= bins.ancho as usize { //DEBEN SER CONTIGUOS LOS ESPACIOS DEL ANCHO
                     let an_i: f64 = items[indice].ancho as f64; 
                     let jump_fl:f64 = (j as f64 / an_i as f64).floor();
                     let j_f64:f64 = j as f64;
-
+                    //ECUACIÓN PARA OBTENER EL INDICE DE 1DIMENSIÓN
                     let ec = ((desde + (jump_fl * len_f64)) + j_f64 - (jump_fl * an_i)) as usize;
-                    println!("ec: {}, desde: {}, j: {}", ec, i, j_f64);
-                    
-                }
-                else{
-                    println!("esto sucede cuando: los espacios no son contiguos");
-                }
-                //NICE: AHORA NECESITAMOS QUE NOS GENERE LOS ESPACIOS DISPONIBLES A PARTIR DE 2 INDICES
-                    //OBTENEMOS LOS 2 INDICES A PARTIR DEL NUMERO DE 1 INDICE   
-                    //COMPROBAMOS QUE ESAS DIRECCIONES ESTÉN DISPONIBLES
-                        //SI ESTAN DISPONIBLES LO INSERTAMOS
-                            //SI LO INSERTAMOS, PONEMOS UNA VARIABLE BOOL DE INSERTADO
-                        //SI NO, PASAMOS A LA SIGUIENTE POSIBLE POSICIÓN
-                        //SI NO SE PUDO INSERTAR EN NINGUNA POSICIÓN, PASAMOS AL SIGUIENTE CONTENEDOR
+                    print!("ec: {}, desde: {}, j: {}", ec, i, j_f64);
+                    //NICE: AHORA NECESITAMOS QUE NOS GENERE LOS ESPACIOS DISPONIBLES A PARTIR DE 2 INDICES
+                    //OBTENEMOS LOS 2 INDICES A PARTIR DEL NUMERO DE 1 INDICE 
+                    let i_comp:usize= (ec as f64 / len_f64).floor() as usize;    
+                    let j_comp:usize= ec % len_f64 as usize;
+                    print!(" i_comp:{}, j_comp: {}\n", i_comp, j_comp);
+                        //COMPROBAMOS QUE ESAS DIRECCIONES ESTÉN DISPONIBLES
+                            //SI ESTAN DISPONIBLES LO INSERTAMOS
+                                //SI LO INSERTAMOS, PONEMOS UNA VARIABLE BOOL DE INSERTADO
+                            //SI NO, PASAMOS A LA SIGUIENTE POSIBLE POSICIÓN
+                            //SI NO SE PUDO INSERTAR EN NINGUNA POSICIÓN, PASAMOS AL SIGUIENTE CONTENEDOR
+                    }
+                    else{
+                        println!("esto sucede cuando: los espacios no son contiguos");
+                    }
+                
             }
         }
     }

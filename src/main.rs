@@ -21,6 +21,7 @@ fn main() {
             let amount_bins_ancho:i32= w_a.ancho / bins.ancho;
             let amount_bins_alto: i32 = w_a.alto / bins.alto;
             let cant_bins = amount_bins_alto*amount_bins_ancho;
+
             let mut bins_array: Vec<Vec<Vec<char>>>= Vec::new();
 
             println!("Caben  {} Bins a lo ancho", amount_bins_ancho);
@@ -42,8 +43,20 @@ fn main() {
             imprimir_items(&items);
             
             //COMENZAR A ALMACENAR LOS ITEMS EN LOS CONTENEDORES
-            colocar_items(&items, &bins, cant_bins, bins_array)
-            
+            let items_acomodados:i32=colocar_items(&items, &bins, cant_bins, &mut bins_array);
+            println!("Items insertados: {}", items_acomodados);
+            //MOSTRAR LO HECHO EN PANTALLA -> PODEMOS IMPRIMIR INDIVIDUALMENTE CADA CONTENEDOR, O ENVIAR LAS POSICIONES DE CADA ITEM EN EL CONTENEDOR, A SU EQUIVALENTE EN EL WORK_AREA
+                //LA PRIMERA NO QUEDA ESTÉTICAMENTE BIEN PERO LO HAREMOS PROVISIONALMENTE
+                    //SOLO IMPRIMIMOS LOS CONTENEDORES USADOS: HAY QUE VER CUALES FUERON USADOS
+                let cont_usados:i32 = contar_contenedores_usados(&mut bins_array, &bins);
+                
+                println!("Contenedores usados: {}", cont_usados);
+                for i in 0..cont_usados as usize{
+                    println!("Contenedor: ");
+                    mostrar_array(&bins_array[i], &bins)
+                }
+                //LA SEGUNDA IMPLICA CALCULAR LOS ÍNDICES DEL W_A[i][j] A PARTIR DE LOS INDICES DEL [CONT][I][j]
+
         }
         else {
             println!("Los contenedores no pueden ser más grandes que el area de trabajo");
@@ -54,20 +67,30 @@ fn main() {
         
     }    
 }
-fn colocar_items(items: &Vec<Rec>, bins: &Rec, cant_bins: i32, mut bins_array: Vec<Vec<Vec<char>>>){
+fn colocar_items(items: &Vec<Rec>, bins: &Rec, cant_bins: i32, bins_array: &mut Vec<Vec<Vec<char>>>)->i32{
     //INICIALIZAMOS LOS BINS CON 0s
+    let mut acomodados: i32 =0;
     for _i in 0..cant_bins{
         bins_array.push(inicializar_space_array(&bins))
     }
     //RECORREMOS LOS ITEMS Y ACOMODAMOS UNO POR UNO
     for i in 0..items.len() { 
-        acomodar(bins.clone(), cant_bins, &bins_array, items, i);
+        if acomodar(bins.clone(), cant_bins, bins_array, items, i) ==true{
+            acomodados+=1;
+        }
     }
+    acomodados
 }
-fn acomodar(bins: Rec, cant_bins: i32, bins_array: &Vec<Vec<Vec<char>>>, items: &Vec<Rec>, indice: usize){
+fn acomodar(bins: Rec, cant_bins: i32, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Rec>, indice: usize) -> bool{
+    let mut insertado: bool = false;
+
     for b in 0..cant_bins as usize{//RECORREMOS LOS CONTENEDORES B ES EL CONTENEDOR
+        if insertado == true {  //SI YA FUE INSERTADO, NOS SALIMOS DE LOS CONTENEDORES
+            break;
+        }
         let mut disp : Vec<(usize, usize)> = Vec::new(); //ARREGLO PARA ALMACENAR LOS INDICES DISPONIBLES
         let mut contador:i32=0; //CONTADOR PARA SABER EL AREA DISPONIBLE
+
         for i in 0..bins.alto as usize{ //FILAS
             for j in 0..bins.ancho as usize{ //COLUMNAS
                 //CONTAMOS ESPACIOS DISPONIBLES
@@ -77,26 +100,35 @@ fn acomodar(bins: Rec, cant_bins: i32, bins_array: &Vec<Vec<Vec<char>>>, items: 
                 }
             }
         }
-        
         if contador < items[indice].area{
             //IF EL AREA DISPONIBLE ES MENOR QUE EL AREA DEL ITEM ACTUAL PASAMOS AL SIGUIENTE CONTENEDOR
             continue;
         }
         //REVISAR QUE LOS ESPACIOS VACIÓS SEAN USABLES POR EL ITEM
 
-            //RECORREMOS LOS ESPACIOS DISPONBIES, MENOS LOS ÚLTIMOS (AREA DEL RECTANGULO) PORQUE COMPARAMOS CADA I CON SUS (AREA DEL RECTANGULO) SIGUIENTES
-        for i in 0..(disp.len()-(items[indice].area) as usize){
+        //RECORREMOS LOS ESPACIOS DISPONBIES, MENOS LOS ÚLTIMOS (AREA DEL RECTANGULO) PORQUE COMPARAMOS CADA I CON SUS (AREA DEL RECTANGULO) SIGUIENTES
+
+    
+        for i in 0..(disp.len()-(items[indice].area) as usize){ //RECORREMOS LOS ESPACIOS DISPONBIES
+            if insertado == true{ //SI YA FUE INSERTADO NOS SALIMOS DE LOS ESPACIOS DISPONIBLES
+                break;
+            }
+            //QUIZÁ NO DEBA SER DESDE 0, SINO DESDE DISP[0]  //ES UNA TUPLA, ENTONCES HABRÍA QUE OBTENER EL EC ASOCIADO A ESOS i y j; 
+            //(QUE LO VEA EL YO DEL FUTURO, A DECIR VERDAD TEMO ROMPERLO)
+
             //CADA ITERACIÓN ES UN POSIBLE LUGAR DONDE PONER EL ITEM
-            println!("\nContenedor: {} | Desde: {}", b, i);
+            println!("\nItem: {} | Contenedor: {} | Desde: {}",indice, b, i);
+
+            let mut contador_disp:i32=0;
+            let mut coor_insert: Vec<(usize, usize)> = Vec::new();
+
             //COMPARAMOS CADA I CON (SUS AREA DEL RECTANGULO) SIGUIENTES
-            for j in 0..(items[indice].area) as usize{
-                // C/ITERACIÓN ES UN INDICE SIGUIENTE DEL ITEM DESDE EL INDICE i
+            for j in 0..(items[indice].area) as usize{// C/ITERACIÓN ES UN INDICE SIGUIENTE DEL ITEM DESDE EL INDICE i
 
                 //ESTO NOS GENERA LOS INDICES QUE DEBERÍAN ESTAR DISPONIBLES PARA GUARDAR EL ITEM PARTIENDO DESDE I
                 
                 //A PARTIR DE UN SOLO INDICE
-                let desde:f64 = i as f64;
-                let len_f64:f64 = bins.ancho as f64;
+                let desde:f64 = i as f64; let len_f64:f64 = bins.ancho as f64;
                 let condicion: usize = (desde % len_f64).floor() as usize; //SE REINICIA A CERO CADA QUE CAMBIA DE FILA
                 if condicion + items[indice].ancho as usize <= bins.ancho as usize { //DEBEN SER CONTIGUOS LOS ESPACIOS DEL ANCHO
                     let an_i: f64 = items[indice].ancho as f64; 
@@ -110,19 +142,48 @@ fn acomodar(bins: Rec, cant_bins: i32, bins_array: &Vec<Vec<Vec<char>>>, items: 
                     let i_comp:usize= (ec as f64 / len_f64).floor() as usize;    
                     let j_comp:usize= ec % len_f64 as usize;
                     print!(" i_comp:{}, j_comp: {}\n", i_comp, j_comp);
-                        //COMPROBAMOS QUE ESAS DIRECCIONES ESTÉN DISPONIBLES
-                            //SI ESTAN DISPONIBLES LO INSERTAMOS
-                                //SI LO INSERTAMOS, PONEMOS UNA VARIABLE BOOL DE INSERTADO
-                            //SI NO, PASAMOS A LA SIGUIENTE POSIBLE POSICIÓN
-                            //SI NO SE PUDO INSERTAR EN NINGUNA POSICIÓN, PASAMOS AL SIGUIENTE CONTENEDOR
-                    }
-                    else{
-                        println!("esto sucede cuando: los espacios no son contiguos");
-                    }
+                    //COMPROBAMOS QUE ESAS DIRECCIONES ESTÉN DISPONIBLES (0 es disponible)
+                    if bins_array[b][i_comp][j_comp] == char::from_u32(48 as u32).unwrap(){
+                        //PARA ESO NECESITAMOS UN CONTADOR
+                        contador_disp+=1;
+                        coor_insert.push((i_comp, j_comp));
+                    }     
+                }
                 
+            }// END FOR QUE GENERA LOS INDICES Y VERIFICA SU DISPONIBILIDAD
+
+            //SI ESTAN DISPONIBLES LO INSERTAMOS
+            if contador_disp >= items[indice].area{
+                //INCERTAR
+                for (i_comp, j_comp) in coor_insert{
+                    let character = char::from_u32((64+indice) as u32).unwrap();
+                    bins_array[b][i_comp][j_comp] = character;
+                }
+                //SI LO INSERTAMOS, PONEMOS UNA VARIABLE BOOL DE INSERTADO
+                insertado=true;
+            }
+            //SI NO, LO DEJAMOS SEGUIR A LA SIGUIENTE POSIBLE POSICIÓN
+            
+        }//END DEL FOR QUE RECORRE LOS ESPACIOS DISPONIBLES
+        //SI NO SE PUDO INSERTAR EN NINGUNA POSICIÓN, PASAMOS AL SIGUIENTE CONTENEDOR
+    }//END DEL FOR QUE RECORRE LOS CONTENEDORES
+    return insertado;
+}
+fn contar_contenedores_usados(bins_array: &mut Vec<Vec<Vec<char>>>, bins: &Rec) -> i32{
+    let mut cont_usados: i32 = 0;
+    for i in 0..bins_array.len(){
+        let mut usado: bool = false;
+        for j in 0..bins.alto as usize{
+            if usado == true {break}
+            for k in 0..bins.ancho as usize{
+                if usado == true {break}
+                usado = if bins_array[i][j][k] != char::from_u32(48 as u32).unwrap()
+                { true } else {false}
             }
         }
+        cont_usados += if usado == true {1} else {0}
     }
+    cont_usados
 }
 fn pedir_items(bins: &Rec)->Vec<Rec>{
     //CANTIDAD DE ITEMS
@@ -235,4 +296,3 @@ fn imprimir_items(items: &Vec<Rec>){
         println!("H: {}, W: {}, A:{}", items[i].alto, items[i].ancho, items[i].area);
     }
 }
-

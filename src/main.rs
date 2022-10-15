@@ -65,7 +65,7 @@ fn colocar_items(items: &Vec<Rec>, bins: &Rec, cant_bins: i32, mut bins_array: V
     }
 }
 fn acomodar(bins: Rec, cant_bins: i32, bins_array: &Vec<Vec<Vec<char>>>, items: &Vec<Rec>, indice: usize){
-    for b in 0..cant_bins as usize{//RECORREMOS LOS CONTENEDORES
+    for b in 0..cant_bins as usize{//RECORREMOS LOS CONTENEDORES B ES EL CONTENEDOR
         let mut disp : Vec<(usize, usize)> = Vec::new(); //ARREGLO PARA ALMACENAR LOS INDICES DISPONIBLES
         let mut contador:i32=0; //CONTADOR PARA SABER EL AREA DISPONIBLE
         for i in 0..bins.alto as usize{ //FILAS
@@ -88,27 +88,34 @@ fn acomodar(bins: Rec, cant_bins: i32, bins_array: &Vec<Vec<Vec<char>>>, items: 
 
         for i in 0..(disp.len()-(items[indice].ancho*items[indice].alto) as usize){
             //CADA ITERACIÓN ES UN POSIBLE LUGAR DONDE PONER EL ITEM
-            println!("\n");
+            println!("\n Dis: {} - Items.area:{}:{} | Contenedor: {}", disp.len(), items[indice].ancho*items[indice].alto, items[indice].area, b);
             //COMPARAMOS CADA I CON (SUS AREA DEL RECTANGULO) SIGUIENTES
             for j in i..(items[indice].ancho*items[indice].alto) as usize{
                 //CADA ITERACIÓN ES UN INDICE SIGUIENTE DEL ITEM DESDE EL INDICE I
 
                 //ESTO NOS GENERA LOS INDICES QUE DEBERÍAN ESTAR DISPONIBLES PARA GUARDAR EL ITEM PARTIENDO DESDE I
                 //A PARTIR DE UN SOLO INDICE
-                if i + items[indice].ancho as usize <= bins.ancho as usize {
-                    let desde:f64 = i as f64;
+
+                //AHORA, ESTO TIENE ALGUNOS PROBLEMAS.
+                //1 SOLO FUNCIONA CON ELEMENTOS DE LA PRIMER LINEA
+                //2 DE ALGUNA FORMA CUANDO EMPIEZA DESDE 1, EN REALIDAD EMPIEZA DESDE 2, Y DESDE 2:  4 || PARECE QUE OMITE LOS PRIMEROS, PERO EL RESTO LOS HACE
+
+                //DEBEN SER CONTIGUOS LOS ESPACIOS DEL ANCHO
+                let desde:f64 = i as f64;
+                let len_f64:f64 = bins.ancho as f64;
+                let condicion: usize = (desde % len_f64).floor() as usize; //SE REINICIA A CERO CADA QUE CAMBIA DE FILA
+
+                if condicion + items[indice].ancho as usize <= bins.ancho as usize { //DEFINITIVAMENTE EL PROBLEMA 1 ESTÁ AQUÍ: Todo parece indicar que la respuesta será manipular i para reiniciarse en cada salto de linea
                     let an_i: f64 = items[indice].ancho as f64; 
-                    let len_f64:f64 = bins.ancho as f64;
                     let jump_fl:f64 = (j as f64 / an_i as f64).floor();
                     let j_f64:f64 = j as f64;
 
                     let ec = ((desde + (jump_fl * len_f64)) + j_f64 - jump_fl * an_i) as usize;
-                    println!("ec: {}", ec);
+                    println!("ec: {}, desde: {}", ec, i);
                     
                 }
-                //CON LOS DOS ÍNDICES
-                if bins_array[b][disp[j].0][disp[j].1] == char::from_u32(48 as u32).unwrap(){
-                    contador+=0;
+                else{
+                    println!("esto sucede cuando: los espacios no son contiguos");
                 }
             }
         }

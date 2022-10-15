@@ -86,32 +86,28 @@ fn acomodar(bins: Rec, cant_bins: i32, bins_array: &Vec<Vec<Vec<char>>>, items: 
 
         //RECORREMOS LOS ESPACIOS DISPONBIES, MENOS LOS ÚLTIMOS (AREA DEL RECTANGULO) PORQUE COMPARAMOS CADA I CON SUS (AREA DEL RECTANGULO) SIGUIENTES
 
-        for i in 0..(disp.len()-(items[indice].ancho*items[indice].alto) as usize){
+        for i in 0..(disp.len()-(items[indice].area) as usize){
             //CADA ITERACIÓN ES UN POSIBLE LUGAR DONDE PONER EL ITEM
-            println!("\n Dis: {} - Items.area:{}:{} | Contenedor: {}", disp.len(), items[indice].ancho*items[indice].alto, items[indice].area, b);
+            println!("\nContenedor: {} | Desde: {}", b, i);
             //COMPARAMOS CADA I CON (SUS AREA DEL RECTANGULO) SIGUIENTES
-            for j in i..(items[indice].ancho*items[indice].alto) as usize{
-                //CADA ITERACIÓN ES UN INDICE SIGUIENTE DEL ITEM DESDE EL INDICE I
+            for j in 0..(items[indice].area) as usize{
+                // C/ITERACIÓN ES UN INDICE SIGUIENTE DEL ITEM DESDE EL INDICE i
 
                 //ESTO NOS GENERA LOS INDICES QUE DEBERÍAN ESTAR DISPONIBLES PARA GUARDAR EL ITEM PARTIENDO DESDE I
                 //A PARTIR DE UN SOLO INDICE
-
-                //AHORA, ESTO TIENE ALGUNOS PROBLEMAS.
-                //1 SOLO FUNCIONA CON ELEMENTOS DE LA PRIMER LINEA
-                //2 DE ALGUNA FORMA CUANDO EMPIEZA DESDE 1, EN REALIDAD EMPIEZA DESDE 2, Y DESDE 2:  4 || PARECE QUE OMITE LOS PRIMEROS, PERO EL RESTO LOS HACE
 
                 //DEBEN SER CONTIGUOS LOS ESPACIOS DEL ANCHO
                 let desde:f64 = i as f64;
                 let len_f64:f64 = bins.ancho as f64;
                 let condicion: usize = (desde % len_f64).floor() as usize; //SE REINICIA A CERO CADA QUE CAMBIA DE FILA
 
-                if condicion + items[indice].ancho as usize <= bins.ancho as usize { //DEFINITIVAMENTE EL PROBLEMA 1 ESTÁ AQUÍ: Todo parece indicar que la respuesta será manipular i para reiniciarse en cada salto de linea
+                if condicion + items[indice].ancho as usize <= bins.ancho as usize { 
                     let an_i: f64 = items[indice].ancho as f64; 
                     let jump_fl:f64 = (j as f64 / an_i as f64).floor();
                     let j_f64:f64 = j as f64;
 
-                    let ec = ((desde + (jump_fl * len_f64)) + j_f64 - jump_fl * an_i) as usize;
-                    println!("ec: {}, desde: {}", ec, i);
+                    let ec = ((desde + (jump_fl * len_f64)) + j_f64 - (jump_fl * an_i)) as usize;
+                    println!("ec: {}, desde: {}, j: {}", ec, i, j_f64);
                     
                 }
                 else{

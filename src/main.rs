@@ -1,17 +1,17 @@
 pub mod rectangulo;
 
 use rectangulo::Rectangulo as Rec;
-//let mut nombres: Vec<String> = Vec::new();        ARRAYLIST
+
 fn main() {
     loop{
         //std::process::Command::new("clear").status().unwrap();
         println!("\nIMPLEMENTACIÓN 2D BPP");
 
-        // let w_a: Rectangulo = obtener_rectangulo("area de trabajo:".to_string());
-        // let bins: Rectangulo = obtener_rectangulo("contenedor:".to_string());
+        let w_a: Rec = obtener_rectangulo("area de trabajo:".to_string());
+        let bins: Rec = obtener_rectangulo("contenedor:".to_string());
             //DATOS POR DEFECTO PARA LAS PRUEBAS
-        let w_a:Rec= Rec{ alto: 15, ancho: 10, area: 150};
-        let bins:Rec= Rec {alto: 6, ancho: 5, area: 30};
+        //let w_a:Rec= Rec{ alto: 15, ancho: 10, area: 150};
+        //let bins:Rec= Rec {alto: 6, ancho: 5, area: 30};
         
         if bins.alto < w_a.alto && bins.ancho < w_a.ancho {
             //CREAMOS LA MATRIZ DE ESPACIO VACIO
@@ -107,9 +107,10 @@ fn acomodar(bins: Rec, cant_bins: i32, bins_array: &mut Vec<Vec<Vec<char>>>, ite
         //REVISAR QUE LOS ESPACIOS VACIÓS SEAN USABLES POR EL ITEM
 
         //RECORREMOS LOS ESPACIOS DISPONBIES, MENOS LOS ÚLTIMOS (AREA DEL RECTANGULO) PORQUE COMPARAMOS CADA I CON SUS (AREA DEL RECTANGULO) SIGUIENTES
-
-    
-        for i in 0..(disp.len()-(items[indice].area) as usize){ //RECORREMOS LOS ESPACIOS DISPONBIES
+        let (i_c, j_c) = disp[0];
+        let n_ec: usize = (bins.ancho as usize * i_c) + j_c;
+        
+        for i in n_ec..(bins.area as usize - (items[indice].area as usize ) ){ //RECORREMOS LOS ESPACIOS DISPONBIES
             if insertado == true{ //SI YA FUE INSERTADO NOS SALIMOS DE LOS ESPACIOS DISPONIBLES
                 break;
             }
@@ -117,7 +118,7 @@ fn acomodar(bins: Rec, cant_bins: i32, bins_array: &mut Vec<Vec<Vec<char>>>, ite
             //(QUE LO VEA EL YO DEL FUTURO, A DECIR VERDAD TEMO ROMPERLO)
 
             //CADA ITERACIÓN ES UN POSIBLE LUGAR DONDE PONER EL ITEM
-            println!("\nItem: {} | Contenedor: {} | Desde: {}",indice, b, i);
+            //println!("\nItem: {} | Contenedor: {} | Desde: {}:{} ",indice, b, i, n_ec);
 
             let mut contador_disp:i32=0;
             let mut coor_insert: Vec<(usize, usize)> = Vec::new();
@@ -129,20 +130,27 @@ fn acomodar(bins: Rec, cant_bins: i32, bins_array: &mut Vec<Vec<Vec<char>>>, ite
                 
                 //A PARTIR DE UN SOLO INDICE
                 let desde:f64 = i as f64; let len_f64:f64 = bins.ancho as f64;
-                let condicion: usize = (desde % len_f64).floor() as usize; //SE REINICIA A CERO CADA QUE CAMBIA DE FILA
-                if condicion + items[indice].ancho as usize <= bins.ancho as usize { //DEBEN SER CONTIGUOS LOS ESPACIOS DEL ANCHO
+                let reinicio_ancho: usize = (desde % len_f64) as usize; //SE REINICIA A CERO CADA QUE CAMBIA DE FILA.
+                let reinicio_alto: usize = (desde / len_f64).floor() as usize;
+                //DEBEN SER CONTIGUOS LOS ESPACIOS DEL ANCHO
+                let condicion_ancho:bool = (reinicio_ancho) as i32 + items[indice].ancho <= bins.ancho;
+                let condicion_alto: bool =reinicio_alto as i32 + items[indice].alto <= bins.alto;
+
+                if condicion_ancho && condicion_alto{ 
                     let an_i: f64 = items[indice].ancho as f64; 
                     let jump_fl:f64 = (j as f64 / an_i as f64).floor();
                     let j_f64:f64 = j as f64;
                     //ECUACIÓN PARA OBTENER EL INDICE DE 1DIMENSIÓN
                     let ec = ((desde + (jump_fl * len_f64)) + j_f64 - (jump_fl * an_i)) as usize;
-                    print!("ec: {}, desde: {}, j: {}", ec, i, j_f64);
+                    //print!("ec: {}, desde: {}, j: {}", ec, i, j_f64);
                     //NICE: AHORA NECESITAMOS QUE NOS GENERE LOS ESPACIOS DISPONIBLES A PARTIR DE 2 INDICES
                     //OBTENEMOS LOS 2 INDICES A PARTIR DEL NUMERO DE 1 INDICE 
+                    
                     let i_comp:usize= (ec as f64 / len_f64).floor() as usize;    
                     let j_comp:usize= ec % len_f64 as usize;
-                    print!(" i_comp:{}, j_comp: {}\n", i_comp, j_comp);
+                    //print!(" i_comp:{}, j_comp: {}\n", i_comp, j_comp);
                     //COMPROBAMOS QUE ESAS DIRECCIONES ESTÉN DISPONIBLES (0 es disponible)
+                    if ec >= bins.area as usize {break}
                     if bins_array[b][i_comp][j_comp] == char::from_u32(48 as u32).unwrap(){
                         //PARA ESO NECESITAMOS UN CONTADOR
                         contador_disp+=1;
@@ -161,6 +169,9 @@ fn acomodar(bins: Rec, cant_bins: i32, bins_array: &mut Vec<Vec<Vec<char>>>, ite
                 }
                 //SI LO INSERTAMOS, PONEMOS UNA VARIABLE BOOL DE INSERTADO
                 insertado=true;
+            }
+            else{
+                //println!("No se insertó");
             }
             //SI NO, LO DEJAMOS SEGUIR A LA SIGUIENTE POSIBLE POSICIÓN
             

@@ -13,7 +13,7 @@ fn main() {
         //let w_a:Rec= Rec{ alto: 15, ancho: 10, area: 150};
         //let bins:Rec= Rec {alto: 6, ancho: 5, area: 30};
         
-        if bins.alto < w_a.alto && bins.ancho < w_a.ancho {
+        if  w_a.alto > bins.alto &&  w_a.ancho > bins.ancho {
             //CREAMOS LA MATRIZ DE ESPACIO VACIO
             let mut wa_space_array: Vec<Vec<char>> = inicializar_space_array(&w_a);
                                  
@@ -55,6 +55,10 @@ fn main() {
                     println!("Contenedor: ");
                     mostrar_array(&bins_array[i], &bins)
                 }
+
+            if (items_acomodados as usize) < items.len() {
+                println!("No se pudieron insertar todos los items");
+            }
                 //LA SEGUNDA IMPLICA CALCULAR LOS ÍNDICES DEL W_A[i][j] A PARTIR DE LOS INDICES DEL [CONT][I][j]
 
         }

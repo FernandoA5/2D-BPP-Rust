@@ -13,7 +13,7 @@ fn main() {
         //let w_a:Rec= Rec{ alto: 15, ancho: 10, area: 150};
         //let bins:Rec= Rec {alto: 6, ancho: 5, area: 30};
         
-        if  w_a.alto > bins.alto &&  w_a.ancho > bins.ancho {
+        if  w_a.alto >= bins.alto &&  w_a.ancho >= bins.ancho {
             //CREAMOS LA MATRIZ DE ESPACIO VACIO
             let mut wa_space_array: Vec<Vec<char>> = inicializar_space_array(&w_a);
                                  
@@ -33,8 +33,8 @@ fn main() {
             //MOSTRAR BINS EN EL WORK AREA
             mostrar_array(&wa_space_array, &w_a);
 
-            //FUNCIONA - A PEDIR LOS ITEMS
-            let mut items: Vec<Rec> = pedir_items(&bins);
+            //FUNCIONA - A PEDIR LOS ITEMS   //AQUÍ HAY UN BUG, NO SE ESTÁ VALIDANDO QUE LA SUMA DEL AREA DE LOS ITEMS SEA MENOR QUE LA DE EL W_A (CONSIDERAR TAMBIÉN LA DE LOS CONTENEDORES)
+            let mut items: Vec<Rec> = pedir_items(&bins, &w_a);
             println!("Items sin ordenar:");
             imprimir_items(&items);
             println!("Ordenando items...");
@@ -48,18 +48,20 @@ fn main() {
             //MOSTRAR LO HECHO EN PANTALLA -> PODEMOS IMPRIMIR INDIVIDUALMENTE CADA CONTENEDOR, O ENVIAR LAS POSICIONES DE CADA ITEM EN EL CONTENEDOR, A SU EQUIVALENTE EN EL WORK_AREA
                 //LA PRIMERA NO QUEDA ESTÉTICAMENTE BIEN PERO LO HAREMOS PROVISIONALMENTE
                     //SOLO IMPRIMIMOS LOS CONTENEDORES USADOS: HAY QUE VER CUALES FUERON USADOS
-                let cont_usados:i32 = contar_contenedores_usados(&mut bins_array, &bins);
-                
-                println!("Contenedores usados: {}", cont_usados);
-                for i in 0..cont_usados as usize{
-                    println!("Contenedor: ");
-                    mostrar_array(&bins_array[i], &bins)
-                }
+            let cont_usados:i32 = contar_contenedores_usados(&mut bins_array, &bins);
+            
+            println!("Contenedores usados: {}", cont_usados);
+            for i in 0..cont_usados as usize{
+                println!("Contenedor: ");
+                mostrar_array(&bins_array[i], &bins)
+            }
 
             if (items_acomodados as usize) < items.len() {
                 println!("No se pudieron insertar todos los items");
             }
                 //LA SEGUNDA IMPLICA CALCULAR LOS ÍNDICES DEL W_A[i][j] A PARTIR DE LOS INDICES DEL [CONT][I][j]
+            //DEBERÍAMOS EXPORTAR LOS RESULTADOS DE ALGUNA MANERA
+            //CONT | ITEM |INICIO: x_i, y_i | FINAL: x_f, y_f
 
         }
         else {
@@ -114,14 +116,11 @@ fn acomodar(bins: Rec, cant_bins: i32, bins_array: &mut Vec<Vec<Vec<char>>>, ite
         let (i_c, j_c) = disp[0];
         let n_ec: usize = (bins.ancho as usize * i_c) + j_c;
         
-        for i in n_ec..(bins.area as usize - (items[indice].area as usize ) ){ //RECORREMOS LOS ESPACIOS DISPONBIES
+        for i in n_ec..(bins.area as usize - (items[indice].area as usize ) ){ //RECORREMOS LOS ESPACIOS DISPONBIES. CADA ITERACIÓN ES UN POSIBLE LUGAR DONDE PONER EL ITEM
             if insertado == true{ //SI YA FUE INSERTADO NOS SALIMOS DE LOS ESPACIOS DISPONIBLES
                 break;
             }
-            //QUIZÁ NO DEBA SER DESDE 0, SINO DESDE DISP[0]  //ES UNA TUPLA, ENTONCES HABRÍA QUE OBTENER EL EC ASOCIADO A ESOS i y j; 
-            //(QUE LO VEA EL YO DEL FUTURO, A DECIR VERDAD TEMO ROMPERLO)
 
-            //CADA ITERACIÓN ES UN POSIBLE LUGAR DONDE PONER EL ITEM
             //println!("\nItem: {} | Contenedor: {} | Desde: {}:{} ",indice, b, i, n_ec);
 
             let mut contador_disp:i32=0;
@@ -147,6 +146,7 @@ fn acomodar(bins: Rec, cant_bins: i32, bins_array: &mut Vec<Vec<Vec<char>>>, ite
                     //ECUACIÓN PARA OBTENER EL INDICE DE 1DIMENSIÓN
                     let ec = ((desde + (jump_fl * len_f64)) + j_f64 - (jump_fl * an_i)) as usize;
                     //print!("ec: {}, desde: {}, j: {}", ec, i, j_f64);
+
                     //NICE: AHORA NECESITAMOS QUE NOS GENERE LOS ESPACIOS DISPONIBLES A PARTIR DE 2 INDICES
                     //OBTENEMOS LOS 2 INDICES A PARTIR DEL NUMERO DE 1 INDICE 
                     
@@ -166,7 +166,7 @@ fn acomodar(bins: Rec, cant_bins: i32, bins_array: &mut Vec<Vec<Vec<char>>>, ite
 
             //SI ESTAN DISPONIBLES LO INSERTAMOS
             if contador_disp >= items[indice].area{
-                //INCERTAR
+                //INSERTAR
                 for (i_comp, j_comp) in coor_insert{
                     let character = char::from_u32((64+indice) as u32).unwrap();
                     bins_array[b][i_comp][j_comp] = character;
@@ -200,26 +200,38 @@ fn contar_contenedores_usados(bins_array: &mut Vec<Vec<Vec<char>>>, bins: &Rec) 
     }
     cont_usados
 }
-fn pedir_items(bins: &Rec)->Vec<Rec>{
+fn pedir_items(bins: &Rec, w_a: &Rec)->Vec<Rec>{
     //CANTIDAD DE ITEMS
+    //HAY QUE PARCHAR LO DE LA SUMA DEL AREA AQUÍ
+    let mut sum_area:i32 = 0;
+    let mut area_valida: bool = false;
     let mut items: Vec<Rec> = Vec::new();
-    let items_amout: i32 = get_size("cantidad de items".to_string());
-    //SI EL USUARIO INGRESÓ UNA CANTIDAD VALIDA DE ITEMS
-    if items_amout > 0 {
-        let mut i =0;
-        //PEDIMOS LOS ITEMS
-        while i < items_amout {
-            let rec: Rec = obtener_rectangulo(( "rectangulo ".to_string()+&(i+1).to_string()+":" ).to_string());
-            //SI EL ITEM CABE EN EL BIN SE AGREGA
-            if rec.alto <= bins.alto && rec.ancho <= bins.ancho {
-                items.push(rec);
-                i+=1;
-            }
-            //SI NO, SE PIDE DE NUEVO
-            else{
-                println!("El alto y ancho del item debe ser menor que el de el contenedor");
-            }
-        }  
+    while !area_valida {
+        let items_amout: i32 = get_size("cantidad de items".to_string());
+        //SI EL USUARIO INGRESÓ UNA CANTIDAD VALIDA DE ITEMS
+        if items_amout > 0 {
+            let mut i =0;
+            //PEDIMOS LOS ITEMS
+            while i < items_amout {
+                let rec: Rec = obtener_rectangulo(( "rectangulo ".to_string()+&(i+1).to_string()+":" ).to_string());
+                //SI EL ITEM CABE EN EL BIN SE AGREGA
+                if rec.alto <= bins.alto && rec.ancho <= bins.ancho {
+                    items.push(rec.clone());
+                    sum_area+= rec.area;
+                    i+=1;
+                }
+                //SI NO, SE PIDE DE NUEVO
+                else{
+                    println!("El alto y ancho del item debe ser menor que el de el contenedor");
+                }
+            }  
+        }
+        if sum_area <= w_a.area {
+            area_valida=true;
+        }
+        else{
+            println!("La suma del área de los items no puede ser mayor que el área de trabajo");
+        }
     }
     items
 }

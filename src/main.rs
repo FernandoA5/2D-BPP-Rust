@@ -1,11 +1,25 @@
 pub mod rectangulo;
+pub mod lector_instancias;
 
 use rectangulo::Rectangulo as Rec;
+use lector_instancias::Instancia;
 
 fn main() {
     loop{
         //std::process::Command::new("clear").status().unwrap();
         println!("\nIMPLEMENTACIÓN 2D BPP");
+        //LEEMOS LA INSTANCIA
+        let mut inst: Instancia = Instancia::new();
+        inst.leer_instancia();
+        //MOSTRAMOS EL NOMBRE
+        println!("Instancia: {}", inst.titulo);
+        println!("Items: {}", inst.cantidad_items);
+        inst.obtener_items();
+
+
+        //ESTO ES PARA PAUSARLO DURANTE LOS TEST
+        let _test = get_size("Test".to_string());
+
 
         let w_a: Rec = obtener_rectangulo("area de trabajo:".to_string());
         let bins: Rec = obtener_rectangulo("contenedor:".to_string());
@@ -28,12 +42,13 @@ fn main() {
             println!("Caben  {} Bins a lo alto", amount_bins_alto);
 
             //LLENAMOS EL ARREGLO DEL WORK AREA CON EL NUMERO DEL BIN PARA VIZUALIZARLOS
-            llenar_arreglo_con_bins(&mut wa_space_array, &bins, amount_bins_alto, amount_bins_ancho);
+                //ESTO ES MERAMENTE ESTÉTICO, PARA SETS DE CONTENEDORES DE DISTINTOS TAMAÑOS LO EVITAREMOS
+                llenar_arreglo_con_bins(&mut wa_space_array, &bins, amount_bins_alto, amount_bins_ancho);
             
             //MOSTRAR BINS EN EL WORK AREA
             mostrar_array(&wa_space_array, &w_a);
 
-            //FUNCIONA - A PEDIR LOS ITEMS   //AQUÍ HAY UN BUG, NO SE ESTÁ VALIDANDO QUE LA SUMA DEL AREA DE LOS ITEMS SEA MENOR QUE LA DE EL W_A (CONSIDERAR TAMBIÉN LA DE LOS CONTENEDORES)
+            //FUNCIONA - A PEDIR LOS ITEMS  
             let mut items: Vec<Rec> = pedir_items(&bins, &w_a);
             println!("Items sin ordenar:");
             imprimir_items(&items);
@@ -45,9 +60,7 @@ fn main() {
             //COMENZAR A ALMACENAR LOS ITEMS EN LOS CONTENEDORES
             let items_acomodados:i32=colocar_items(&items, &bins, cant_bins, &mut bins_array);
             println!("Items insertados: {}", items_acomodados);
-            //MOSTRAR LO HECHO EN PANTALLA -> PODEMOS IMPRIMIR INDIVIDUALMENTE CADA CONTENEDOR, O ENVIAR LAS POSICIONES DE CADA ITEM EN EL CONTENEDOR, A SU EQUIVALENTE EN EL WORK_AREA
-                //LA PRIMERA NO QUEDA ESTÉTICAMENTE BIEN PERO LO HAREMOS PROVISIONALMENTE
-                    //SOLO IMPRIMIMOS LOS CONTENEDORES USADOS: HAY QUE VER CUALES FUERON USADOS
+            //MOSTRAR LO HECHO EN PANTALLA -> PODEMOS IMPRIMIR INDIVIDUALMENTE CADA CONTENEDOR
             let cont_usados:i32 = contar_contenedores_usados(&mut bins_array, &bins);
             
             println!("Contenedores usados: {}", cont_usados);
@@ -59,7 +72,6 @@ fn main() {
             if (items_acomodados as usize) < items.len() {
                 println!("No se pudieron insertar todos los items");
             }
-                //LA SEGUNDA IMPLICA CALCULAR LOS ÍNDICES DEL W_A[i][j] A PARTIR DE LOS INDICES DEL [CONT][I][j]
             //DEBERÍAMOS EXPORTAR LOS RESULTADOS DE ALGUNA MANERA
             //CONT | ITEM |INICIO: x_i, y_i | FINAL: x_f, y_f
 
@@ -202,7 +214,6 @@ fn contar_contenedores_usados(bins_array: &mut Vec<Vec<Vec<char>>>, bins: &Rec) 
 }
 fn pedir_items(bins: &Rec, w_a: &Rec)->Vec<Rec>{
     //CANTIDAD DE ITEMS
-    //HAY QUE PARCHAR LO DE LA SUMA DEL AREA AQUÍ
     let mut sum_area:i32 = 0;
     let mut area_valida: bool = false;
     let mut items: Vec<Rec> = Vec::new();

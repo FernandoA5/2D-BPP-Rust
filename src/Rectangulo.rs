@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Rectangulo {
     pub alto: i32,
     pub ancho: i32,

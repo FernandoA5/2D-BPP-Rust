@@ -14,7 +14,21 @@ fn main() {
         //MOSTRAMOS EL NOMBRE
         println!("Instancia: {}", inst.titulo);
         println!("Items: {}", inst.cantidad_items);
-        inst.obtener_items();
+        //OBTENEMOS LOS ITEMS COMO TUPLAS
+        let items_instancia: Vec<(i32, i32)> =  inst.obtener_items();
+        let mut items_rec: Vec<Rec> = Vec::new();
+        //LOS CONVERTIMOS EN RECTANGULOS
+        for (alto, ancho) in items_instancia {
+            let mut rec = Rec{
+                alto: alto,
+                ancho: ancho,
+                area: 0
+            };
+            rec.obtener_area();
+            items_rec.push(rec);
+        }
+        println!("{:?}", items_rec);
+        //AHORA LEEMOS LOS CONTENEDORES
 
 
         //ESTO ES PARA PAUSARLO DURANTE LOS TEST

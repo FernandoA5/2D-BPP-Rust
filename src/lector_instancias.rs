@@ -1,3 +1,4 @@
+
 use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::*;
@@ -76,16 +77,15 @@ impl Instancia{
         let mut guardar = false;
         for linea in lineas { //HAY QUE ENCONTRAR DONDE EMPIEZAN LOS ITEMS
             if guardar{
-                if contador_items == 100 {
+                if contador_items == 100 { //UNA VEZ QUE EL CONTADOR LLEGUE A LA CANTIDAD DE ITEMS, SALIMOS
                     break;
                 }
-                if linea == String::from(""){
+                if linea == String::from(""){ //SI LA LINEA ESTÁ VACÍA PASAMOS A LA SIGUIENTE ITERACIÓN
                     continue;
                 }
                 let item_local: Vec<&str> = linea.split(",").collect();
                 item.0 = item_local[0].trim().parse::<i32>().unwrap();
                 item.1 = item_local[1].trim().parse::<i32>().unwrap();
-                //UNA VEZ QUE EL CONTADOR LLEGUE A LA CANTIDAD DE ITEMS, SALIMOS
                 items.push((item.0, item.1));
                 //AL FINAL DEL GUARDADO SUMAMOS 1 AL CONTADOR
                 contador_items+=1;

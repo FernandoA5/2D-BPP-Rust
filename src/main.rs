@@ -4,6 +4,9 @@ pub mod lector_instancias;
 use rectangulo::Rectangulo as Rec;
 use lector_instancias::Instancia;
 
+use std::fs::OpenOptions;
+use std::io::prelude::*;
+
 fn main() {
     loop{
         //std::process::Command::new("clear").status().unwrap();
@@ -55,7 +58,7 @@ fn main() {
             w_a_sizes.0 += contenedor.alto as i32;
             w_a_sizes.1 += contenedor.ancho as i32;
         };
-        let w_a: Rec = Rec { alto:w_a_sizes.0, ancho: w_a_sizes.1, area: w_a_sizes.0 * w_a_sizes.1 };
+        //let w_a: Rec = Rec { alto:w_a_sizes.0, ancho: w_a_sizes.1, area: w_a_sizes.0 * w_a_sizes.1 };
         //LOS CONTENEDORES SE OBTIENEN A PARTIR DE LA INSTANCIA
         //let bins: Rec = obtener_rectangulo("contenedor:".to_string());
         let bins: &Vec<Rec> = &contenedores_rec;
@@ -97,7 +100,7 @@ fn main() {
             imprimir_items(&items);
             
             //COMENZAR A ALMACENAR LOS ITEMS EN LOS CONTENEDORES
-            let items_acomodados:i32=colocar_items(&items, &bins, &mut bins_array);
+            let items_acomodados:i32=colocar_items(&items, &bins, &mut bins_array, &inst);
             println!("Items insertados: {}", items_acomodados);
             //MOSTRAR LO HECHO EN PANTALLA -> PODEMOS IMPRIMIR INDIVIDUALMENTE CADA CONTENEDOR
             let cont_usados:i32 = contar_contenedores_usados(&mut bins_array, &bins);
@@ -119,15 +122,15 @@ fn main() {
         // else {
         //     println!("Los contenedores no pueden ser más grandes que el area de trabajo");
         // }
-        println!("Work_Area: {}, {}", w_a.alto, w_a.ancho);
-        for bin in bins {
-            println!("Bins size: {}, {}", bin.alto, bin.ancho);
-        }
+        // println!("Work_Area: {}, {}", w_a.alto, w_a.ancho);
+        // for bin in bins {
+        //     println!("Bins size: {}, {}", bin.alto, bin.ancho);
+        // }
 
         
     }    
 }
-fn colocar_items(items: &Vec<Rec>, bins: &Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>)->i32{
+fn colocar_items(items: &Vec<Rec>, bins: &Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, inst:&Instancia)->i32{
     //INICIALIZAMOS LOS BINS CON 0s
     let mut acomodados: i32 =0;
     for bin in bins{
@@ -142,13 +145,13 @@ fn colocar_items(items: &Vec<Rec>, bins: &Vec<Rec>, bins_array: &mut Vec<Vec<Vec
     // }
     //RECORREMOS LOS ITEMS Y ACOMODAMOS UNO POR UNO
     for i in 0..items.len() { 
-        if acomodar(bins.clone(), bins_array, items, i) ==true{
+        if acomodar(bins.clone(), bins_array, items, i, &inst) ==true{
             acomodados+=1;
         }
     }
     acomodados
 }
-fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Rec>, indice: usize) -> bool{
+fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Rec>, indice: usize, inst: &Instancia) -> bool{
     let mut insertado: bool = false;
     let mut i_b: i32 = -1;
     for b in bins{//RECORREMOS LOS CONTENEDORES B ES EL CONTENEDOR
@@ -232,11 +235,14 @@ fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Re
             //SI ESTAN DISPONIBLES LO INSERTAMOS
             if contador_disp >= items[indice].area{
                 //INSERTAR
-                for (i_comp, j_comp) in coor_insert{
+                for (i_comp, j_comp) in coor_insert.clone(){
                     let character = char::from_u32((64+indice) as u32).unwrap();
                     bins_array[i_b as usize][i_comp][j_comp] = character;
                 }
                 //SI LO INSERTAMOS, PONEMOS UNA VARIABLE BOOL DE INSERTADO
+                let contenido: String = format!("item:{}, contenedor: {}, fila:{}, col: {}\n", (indice+1), (i_b+1), coor_insert[0].0, coor_insert[0].1);
+                let mut archivo = OpenOptions::new().append(true).create(true).open(format!("sol-{}.txt", inst.titulo)).unwrap();
+                archivo.write_all(contenido.as_bytes()).unwrap();
                 insertado=true;
             }
             else{

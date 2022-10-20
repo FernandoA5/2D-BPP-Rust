@@ -1,4 +1,4 @@
-name: M1
+name: M1a
 items:100
 6,1
 8,2

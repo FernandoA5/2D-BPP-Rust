@@ -79,7 +79,7 @@ impl Instancia{
         let mut guardar = false;
         for linea in lineas { //HAY QUE ENCONTRAR DONDE EMPIEZAN LOS ITEMS
             if guardar{
-                if contador_items == 100 { //UNA VEZ QUE EL CONTADOR LLEGUE A LA CANTIDAD DE ITEMS, SALIMOS
+                if contador_items == self.cantidad_items { //UNA VEZ QUE EL CONTADOR LLEGUE A LA CANTIDAD DE ITEMS, SALIMOS
                     break;
                 }
                 if linea == String::from(""){ //SI LA LINEA ESTÁ VACÍA PASAMOS A LA SIGUIENTE ITERACIÓN

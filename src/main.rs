@@ -60,11 +60,11 @@ fn main() {
         //let mut items: Vec<Rec> = pedir_items(&bins, &w_a);
         let mut items: Vec<Rec> = items_rec;
         println!("Items sin ordenar:");
-        imprimir_items(&items);
+        //imprimir_items(&items);
         println!("Ordenando items...");
         //ORDENAR ITEMS DE MAYOR A MENOR
         ordenar_items(&mut items);
-        imprimir_items(&items);
+        //imprimir_items(&items);
         
         //COMENZAR A ALMACENAR LOS ITEMS EN LOS CONTENEDORES
         let items_acomodados:i32=colocar_items(&items, &bins, &mut bins_array, &inst);
@@ -184,6 +184,7 @@ fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Re
                 //SI LO INSERTAMOS, PONEMOS UNA VARIABLE BOOL DE INSERTADO
                     //GUARDAMOS lA INFORMACIÓN DE INSERTADO EN UNA CADENA DE TEXTO
                 let contenido: String = format!("item:{}, contenedor: {}, fila:{}, col: {}\n", (indice+1), (i_b+1), coor_insert[0].0, coor_insert[0].1);
+                print!("{}", contenido);
                 //ABRIMOS/CREAMOS EL ARCHIVO DONDE GUARDAREMOS LA INFORMACIÓN DE INSERTADO
                 let mut archivo = OpenOptions::new().append(true).create(true).open(format!("sol-{}.txt", inst.titulo)).unwrap();
                 //ESCRIBIMOS LA INFORMACIÓN DE INSERTADO EN EL ARCHIVO

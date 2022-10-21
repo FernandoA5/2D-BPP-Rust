@@ -1,4 +1,4 @@
-name: M1b
+name:M1b
 items:100
 9,7
 4,2

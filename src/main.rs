@@ -7,13 +7,17 @@ use lector_instancias::Instancia;
 use std::fs::OpenOptions;
 use std::io::prelude::*;
 
+use std::time::{Instant};
+const VERBOSE:bool = true;
 fn main() {
     loop{
+        
         //std::process::Command::new("clear").status().unwrap();
         println!("\nIMPLEMENTACIÓN 2D BPP");
         //LEEMOS LA INSTANCIA
         let mut inst: Instancia = Instancia::new();
         inst.leer_instancia();
+        let now = Instant::now();   
         //MOSTRAMOS EL NOMBRE
         println!("Instancia: {}", inst.titulo);
         println!("Items: {}", inst.cantidad_items);
@@ -59,12 +63,17 @@ fn main() {
         //FUNCIONA - A PEDIR LOS ITEMS   //AHORA SE USAN LOS DE LA INSTANCIA
         //let mut items: Vec<Rec> = pedir_items(&bins, &w_a);
         let mut items: Vec<Rec> = items_rec;
-        println!("Items sin ordenar:");
-        //imprimir_items(&items);
-        println!("Ordenando items...");
+        if VERBOSE == true {
+            println!("Items sin ordenar:");
+            imprimir_items(&items);
+        }
+        
         //ORDENAR ITEMS DE MAYOR A MENOR
         ordenar_items(&mut items);
-        //imprimir_items(&items);
+        if VERBOSE == true{
+            println!("Ordenando items...");
+            imprimir_items(&items);
+        }
         
         //COMENZAR A ALMACENAR LOS ITEMS EN LOS CONTENEDORES
         let items_acomodados:i32=colocar_items(&items, &bins, &mut bins_array, &inst);
@@ -73,26 +82,32 @@ fn main() {
         let cont_usados:i32 = contar_contenedores_usados(&mut bins_array, &bins);
         
         println!("Contenedores usados: {}", cont_usados); let mut i_bin =0;
-        for bin in bins{
-            println!("Contenedor: {}", i_bin+1);
-            mostrar_array(&bins_array[i_bin], &bin);
-            i_bin +=1;
+        if VERBOSE == true {
+            for bin in bins{
+                println!("Contenedor: {}", i_bin+1);
+                mostrar_array(&bins_array[i_bin], &bin);
+                i_bin +=1;
+            }
         }
 
         if (items_acomodados as usize) < items.len() {
             println!("No se pudieron insertar todos los items");
         } 
+        let new_now = Instant::now();
+        println!("Tiempo: {:?}", new_now.duration_since(now));
     }    
 }
 fn colocar_items(items: &Vec<Rec>, bins: &Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, inst:&Instancia)->i32{
     //INICIALIZAMOS LOS BINS CON 0s
+    let mut archivo = OpenOptions::new().create(true).write(true).open(format!("solutions/sol-{}.txt", inst.titulo)).unwrap();
+    archivo.write_all("".as_bytes()).unwrap();
     let mut acomodados: i32 =0;
     for bin in bins{
         bins_array.push(inicializar_space_array(bin));
     }
     //RECORREMOS LOS ITEMS Y ACOMODAMOS UNO POR UNO
     for i in 0..items.len() { 
-        if acomodar(bins.clone(), bins_array, items, i, &inst) ==true{
+        if acomodar(bins.clone(), bins_array, items, i, &inst) == true{
             acomodados+=1;
         }
     }
@@ -184,9 +199,11 @@ fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Re
                 //SI LO INSERTAMOS, PONEMOS UNA VARIABLE BOOL DE INSERTADO
                     //GUARDAMOS lA INFORMACIÓN DE INSERTADO EN UNA CADENA DE TEXTO
                 let contenido: String = format!("item:{}, contenedor: {}, fila:{}, col: {}\n", (indice+1), (i_b+1), coor_insert[0].0, coor_insert[0].1);
-                print!("{}", contenido);
+                if VERBOSE == true{
+                    print!("{}", contenido);
+                }
                 //ABRIMOS/CREAMOS EL ARCHIVO DONDE GUARDAREMOS LA INFORMACIÓN DE INSERTADO
-                let mut archivo = OpenOptions::new().append(true).create(true).open(format!("sol-{}.txt", inst.titulo)).unwrap();
+                let mut archivo = OpenOptions::new().append(true).create(true).open(format!("solutions/sol-{}.txt", inst.titulo)).unwrap();
                 //ESCRIBIMOS LA INFORMACIÓN DE INSERTADO EN EL ARCHIVO
                 archivo.write_all(contenido.as_bytes()).unwrap();
                 insertado=true;
@@ -231,7 +248,7 @@ fn inicializar_space_array(w_a: &Rec)->Vec<Vec<char>>{
 fn mostrar_array(array: &Vec<Vec<char>>, w_a: &Rec){
     for (i, _col) in (0..w_a.alto).enumerate() {
         for (j, _raw) in (0..w_a.ancho).enumerate(){
-            print!("[{}]", array[i][j]);
+            print!("[{}]",array[i][j]);
         }                    
         println!("");
     }
@@ -250,6 +267,6 @@ fn ordenar_items(items: &mut Vec<Rec>){
 }
 fn imprimir_items(items: &Vec<Rec>){
     for i in 0..items.len(){
-        println!("H: {}, W: {}, A:{}", items[i].alto, items[i].ancho, items[i].area);
+        println!("Item: {}, H: {}, W: {}, A:{}", (i+1), items[i].alto, items[i].ancho, items[i].area);
     }
 }

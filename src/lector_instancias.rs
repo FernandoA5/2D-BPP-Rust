@@ -37,7 +37,7 @@ impl Instancia{
             println!("Ingresa el nombre del archivo:");
             stdin.read_line(&mut nombre_ingresado).unwrap();
             if nombre_ingresado.len() > 0{
-                break nombre_ingresado.trim().to_string();
+                break format!("instances/{}", nombre_ingresado.trim().to_string());
             }
         };
         Instancia { archivo: archivo, contenido: String::new(), titulo: String::new(), cantidad_items: 0, cantidad_contenedores: 0}

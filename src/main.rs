@@ -11,7 +11,7 @@ use std::time::{Instant};
 const VERBOSE:bool = true;
 fn main() {
     loop{
-        
+        //EMPEZAMOS CON LA HEURÍSTICA CONTRUCTIVA
         //std::process::Command::new("clear").status().unwrap();
         println!("\nIMPLEMENTACIÓN 2D BPP");
         //LEEMOS LA INSTANCIA
@@ -95,13 +95,32 @@ fn main() {
         } 
         let new_now = Instant::now();
         println!("Tiempo: {:?}", new_now.duration_since(now));
+
+        //AQUÍ EMPEZAMOS CON LA HEURÍSTICA DE MEJORA
+            //NECETIMAS LA LISTA DE ITEMS
+            //NECESITAMOS LOS CONTENEDORES
+
+        //OBTENEMOS EL ITEM MAS GRANDE
+        //LO MOVEMOS Y RESETEAMOS EL ESPACIO A 0s
+        //QUITAMOS LOS ÚLTIMOS N ITEMS QUE QUEPAN EN EL AREA DEL ITEM DE MAYOR TAMAÑO 
+            //MOVEMOS ESOS ITEMS A UNA LISTA APARTE
+            //OBTENEMOS EL Número DEL ITEM QUE SE REINSERTARA A PARTIR DE SUS SIMBOLO
+                //CONVERTRMIOS EL SÍMBOLO EN NÚMERO ENTERO, Y DESDE EL DEFINIMOS LOS SIGUENTES SIMBOLOS
+        //ACOMODAMOS LOS ITEMS CON EL ALGORITMO INICIAL. FUNCION: acomodar()
+        
+               
+
+
     }    
 }
 fn colocar_items(items: &Vec<Rec>, bins: &Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, inst:&Instancia)->i32{
-    //INICIALIZAMOS LOS BINS CON 0s
+       
+    //ABRIMOS/PREPARAMOS EL ARCHIVO DONDE GUARDAREMOS LAS SOLUCIONES
     let mut archivo = OpenOptions::new().create(true).write(true).open(format!("solutions/sol-{}.txt", inst.titulo)).unwrap();
     archivo.write_all("".as_bytes()).unwrap();
-    let mut acomodados: i32 =0;
+
+    let mut acomodados: i32 =0; //CONTADOR Y DE ITEMS ACOMODADOS
+    //INICIALIZAMOS LOS BINS CON 0s
     for bin in bins{
         bins_array.push(inicializar_space_array(bin));
     }
@@ -193,7 +212,13 @@ fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Re
             if contador_disp >= items[indice].area{
                 //INSERTAR
                 for (i_comp, j_comp) in coor_insert.clone(){
-                    let character = char::from_u32((64+indice) as u32).unwrap();
+                    //AQUÍ INSERTAN LOS ITEMS EN LA MATRIZ
+                        //REINICIEMOS LOS SÍMBOLOS DISPONIBLES CUANDO SE TERMINEN
+                    let mut incremento = 33+(if indice >= 90{ indice-33} else {indice});
+                        //EVITAMOS EL 0 PARA EVITAR CONFUCIONES
+                    incremento = if incremento == 48 {33} else{incremento};
+
+                    let character = char::from_u32(incremento as u32).unwrap();
                     bins_array[i_b as usize][i_comp][j_comp] = character;
                 }
                 //SI LO INSERTAMOS, PONEMOS UNA VARIABLE BOOL DE INSERTADO

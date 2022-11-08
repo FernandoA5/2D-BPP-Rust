@@ -49,19 +49,13 @@ fn main() {
             contenedores_rec.push(rec);
         }
 
-        //ESTO ES PARA PAUSARLO DURANTE LOS TEST
-        //let _test = get_size("Test".to_string());
-
         //LOS CONTENEDORES SE OBTIENEN A PARTIR DE LA INSTANCIA
         let bins: &Vec<Rec> = &contenedores_rec;
-        //DATOS POR DEFECTO PARA LAS PRUEBAS
-        //let w_a:Rec= Rec{ alto: 15, ancho: 10, area: 150};
-        //let bins:Rec= Rec {alto: 6, ancho: 5, area: 30};
         
         let mut bins_array: Vec<Vec<Vec<char>>>= Vec::new();            
 
         //FUNCIONA - A PEDIR LOS ITEMS   //AHORA SE USAN LOS DE LA INSTANCIA
-        //let mut items: Vec<Rec> = pedir_items(&bins, &w_a);
+
         let mut items: Vec<Rec> = items_rec;
         if VERBOSE == true {
             println!("Items sin ordenar:");
@@ -75,8 +69,11 @@ fn main() {
             imprimir_items(&items);
         }
         
+        //CREAMOS LA LISTA DE STRINGS QUE REPRESENTAN LA SOLUCIÓN:
+        let mut lista_soluciones: Vec<String> = Vec::new();
+
         //COMENZAR A ALMACENAR LOS ITEMS EN LOS CONTENEDORES
-        let items_acomodados:i32=colocar_items(&items, &bins, &mut bins_array, &inst);
+        let items_acomodados:i32=colocar_items(&items, &bins, &mut bins_array, &inst, &mut lista_soluciones);
         println!("Items insertados: {}", items_acomodados);
         //MOSTRAR LO HECHO EN PANTALLA -> PODEMOS IMPRIMIR INDIVIDUALMENTE CADA CONTENEDOR
         let cont_usados:i32 = contar_contenedores_usados(&mut bins_array, &bins);
@@ -97,23 +94,89 @@ fn main() {
         println!("Tiempo: {:?}", new_now.duration_since(now));
 
         //AQUÍ EMPEZAMOS CON LA HEURÍSTICA DE MEJORA
-            //NECETIMAS LA LISTA DE ITEMS
+            //NECESITAMOS LA LISTA DE ITEMS
             //NECESITAMOS LOS CONTENEDORES
+            //NECESITAMOS LA LISTA DE SOLUCIONES PARA CADA ITEM
+            
 
         //OBTENEMOS EL ITEM MAS GRANDE
+        let larger_item: Rec = items[0].clone();
         //LO MOVEMOS Y RESETEAMOS EL ESPACIO A 0s
-        //QUITAMOS LOS ÚLTIMOS N ITEMS QUE QUEPAN EN EL AREA DEL ITEM DE MAYOR TAMAÑO 
-            //MOVEMOS ESOS ITEMS A UNA LISTA APARTE
+            //PARA ESO USAMOS LA FUNCIÓN DE INSERTAR EN SU POCICION ACTUAL CEROS
+        //QUITAMOS LOS ÚLTIMOS N ITEMS QUE QUEPAN EN EL AREA DEL ITEM DE MAYOR TAMAÑO Y RESETEAMOS SUS ESPACIOS A CERO
+            //MOVEMOS ESOS ITEMS A UNA LISTA APARTE y al FINAL DE LA LISTA PONEMOS EL ÍTEM QUE MOVIMOS AL COMIENZI
             //OBTENEMOS EL Número DEL ITEM QUE SE REINSERTARA A PARTIR DE SUS SIMBOLO
                 //CONVERTRMIOS EL SÍMBOLO EN NÚMERO ENTERO, Y DESDE EL DEFINIMOS LOS SIGUENTES SIMBOLOS
         //ACOMODAMOS LOS ITEMS CON EL ALGORITMO INICIAL. FUNCION: acomodar()
         
+        //IMPRIMIR NUEVAS SOLUCIONES
+            //PARA EMPEZAR NECESITAMOS GUARDAR LAS ANTERIORES EN UNA LISTA
+            //ELIMINAMOS LOS ÍTEMS REORGANIZADOS
+            //AGREGAMOS LOS NUEVOS
+
                
 
 
     }    
 }
-fn colocar_items(items: &Vec<Rec>, bins: &Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, inst:&Instancia)->i32{
+fn insertar_item_individual(item: Rec,bins_array: &mut Vec<Vec<Vec<char>>>, fila: i32, col:i32, simbolo: char, items: &Vec<Rec>, indice_item: usize, bin:Rec, indice_cont: &i32){
+    let mut contador_disp:i32=0;
+    let mut coor_insert: Vec<(usize, usize)> = Vec::new();
+    //I LAS CORDENADAS DE SOLUCION DEL ITEM //SE SACAN DE LA LISTA DE SOLUCIONES
+    let (i_c, j_c) = (0, 0) ; // SACA LOS COMPONENTES i y J DE LA SOLUCION
+    let n_ec: usize = (bin.ancho as usize * i_c) + j_c;
+
+    let mut insertado: bool = false;
+    for i in n_ec..(bin.area as usize - (items[indice_item].area as usize ) ){ //RECORREMOS LOS ESPACIOS DISPONBIES. CADA ITERACIÓN ES UN POSIBLE LUGAR DONDE PONER EL ITEM
+        if insertado == true{ //SI YA FUE INSERTADO NOS SALIMOS DE LOS ESPACIOS DISPONIBLES
+            break;
+        }
+        verificar_disponibilidad_espacio(items, indice_item, i, bin.clone(), bins_array, indice_cont, &mut contador_disp, &mut coor_insert);//GENERA LOS INDICES Y VERIFICA SU DISPONIBILIDAD
+
+        //SI ESTAN DISPONIBLES LO INSERTAMOS
+
+    }
+}
+//I ES EL PRIMER ESPACIO DISPONIBLE //B ES EL CONTENEDOR //I_B INDICE DEL CONTENEDOR
+//INDICE ES EL INDICE DEL ITEM DENTRO DE LA LISTA DE ITEMS
+fn verificar_disponibilidad_espacio(items: &Vec<Rec>, indice: usize, i: usize, b: Rec, bins_array: &mut Vec<Vec<Vec<char>>>, i_b: &i32, contador_disp: &mut i32, coor_insert: &mut Vec<(usize, usize)>){
+    for j in 0..(items[indice].area) as usize{// C/ITERACIÓN ES UN INDICE SIGUIENTE DEL ITEM DESDE EL INDICE i
+
+        //ESTO NOS GENERA LOS INDICES QUE DEBERÍAN ESTAR DISPONIBLES PARA GUARDAR EL ITEM PARTIENDO DESDE I
+        
+        //A PARTIR DE UN SOLO INDICE
+        let desde:f64 = i as f64; let len_f64:f64 = b.ancho as f64;
+        let reinicio_ancho: usize = (desde % len_f64) as usize; //SE REINICIA A CERO CADA QUE CAMBIA DE FILA.
+        let reinicio_alto: usize = (desde / len_f64).floor() as usize;
+        //DEBEN SER CONTIGUOS LOS ESPACIOS DEL ANCHO
+        let condicion_ancho:bool = (reinicio_ancho) as i32 + items[indice].ancho <= b.ancho;
+        let condicion_alto: bool =reinicio_alto as i32 + items[indice].alto <= b.alto;
+
+        if condicion_ancho && condicion_alto{ 
+            let an_i: f64 = items[indice].ancho as f64; 
+            let jump_fl:f64 = (j as f64 / an_i as f64).floor();
+            let j_f64:f64 = j as f64;
+            //ECUACIÓN PARA OBTENER EL INDICE DE 1DIMENSIÓN
+            let ec = ((desde + (jump_fl * len_f64)) + j_f64 - (jump_fl * an_i)) as usize;
+
+            //NICE: AHORA NECESITAMOS QUE NOS GENERE LOS ESPACIOS DISPONIBLES A PARTIR DE 2 INDICES
+            //OBTENEMOS LOS 2 INDICES A PARTIR DEL NUMERO DE 1 INDICE 
+            
+            let i_comp:usize= (ec as f64 / len_f64).floor() as usize;    
+            let j_comp:usize= ec % len_f64 as usize;
+            //print!(" i_comp:{}, j_comp: {}\n", i_comp, j_comp);
+            //COMPROBAMOS QUE ESAS DIRECCIONES ESTÉN DISPONIBLES (0 es disponible)
+            if ec >= b.area as usize {break}
+            if bins_array[*i_b as usize][i_comp][j_comp] == char::from_u32(48 as u32).unwrap(){
+                //PARA ESO NECESITAMOS UN CONTADOR
+                *contador_disp+=1;
+                coor_insert.push((i_comp, j_comp));
+            }     
+        }
+        
+    }
+}
+fn colocar_items(items: &Vec<Rec>, bins: &Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, inst:&Instancia, lista_soluciones: &mut Vec<String>)->i32{
        
     //ABRIMOS/PREPARAMOS EL ARCHIVO DONDE GUARDAREMOS LAS SOLUCIONES
     let mut archivo = OpenOptions::new().create(true).write(true).open(format!("solutions/sol-{}.txt", inst.titulo)).unwrap();
@@ -126,17 +189,17 @@ fn colocar_items(items: &Vec<Rec>, bins: &Vec<Rec>, bins_array: &mut Vec<Vec<Vec
     }
     //RECORREMOS LOS ITEMS Y ACOMODAMOS UNO POR UNO
     for i in 0..items.len() { 
-        if acomodar(bins.clone(), bins_array, items, i, &inst) == true{
+        if acomodar(bins.clone(), bins_array, items, i, &inst, lista_soluciones) == true{
             acomodados+=1;
         }
     }
     acomodados
 }
-fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Rec>, indice: usize, inst: &Instancia) -> bool{
+fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Rec>, indice: usize, inst: &Instancia, lista_soluciones: &mut Vec<String>) -> bool{
     let mut insertado: bool = false;
-    let mut i_b: i32 = -1;
+    let mut i_b: i32 = -1; //Indice Del Contenedor, Empieza en -1 POR ALGUNA RAZÓN
     for b in bins{//RECORREMOS LOS CONTENEDORES B ES EL CONTENEDOR
-        i_b += 1;
+        i_b += 1; //SE ACTUALIZA al SIGUENTE INDICE CONTENEDOR
         if insertado == true {  //SI YA FUE INSERTADO, NOS SALIMOS DE LOS CONTENEDORES
             break;
         }
@@ -145,7 +208,6 @@ fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Re
         for i in 0..b.alto as usize{ //FILAS
             for j in 0..b.ancho as usize{ //COLUMNAS
                 //CONTAMOS ESPACIOS DISPONIBLES
-                //APARENTEMENTE ESTÁN DESSINCRONIZADOS LOS BINS REC CON LA MATRIZ DE CARACTERES
                 if  bins_array[i_b as usize][i][j] == char::from_u32(48 as u32).unwrap(){ //COMPARAMOS QUE EL ARRAY CONTENGA UN 0 (0= DISPONIBLE)
                     contador+=1; //ACTUALIZAMOS EL CONTADOR
                     disp.push((i, j)); //GUARDAMOS LOS SUBINDICES DEL ESPACIO
@@ -159,9 +221,8 @@ fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Re
         //REVISAR QUE LOS ESPACIOS VACIÓS SEAN USABLES POR EL ITEM
 
         //RECORREMOS LOS ESPACIOS DISPONBIES, MENOS LOS ÚLTIMOS (AREA DEL RECTANGULO) PORQUE COMPARAMOS CADA I CON SUS (AREA DEL RECTANGULO) SIGUIENTES
-        let (i_c, j_c) = disp[0];
-        let n_ec: usize = (b.ancho as usize * i_c) + j_c;
-        
+        let (i_c, j_c) = disp[0]; // SACA LOS COMPONENTES i y J DE EL PRIMER ESPACIO DISPONIBLE
+        let n_ec: usize = (b.ancho as usize * i_c) + j_c; //CONVIERTE EN NUMERO LINEAL LAS COORDENADAS 
         for i in n_ec..(b.area as usize - (items[indice].area as usize ) ){ //RECORREMOS LOS ESPACIOS DISPONBIES. CADA ITERACIÓN ES UN POSIBLE LUGAR DONDE PONER EL ITEM
             if insertado == true{ //SI YA FUE INSERTADO NOS SALIMOS DE LOS ESPACIOS DISPONIBLES
                 break;
@@ -171,42 +232,7 @@ fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Re
             let mut coor_insert: Vec<(usize, usize)> = Vec::new();
 
             //COMPARAMOS CADA I CON (SUS AREA DEL RECTANGULO) SIGUIENTES
-            for j in 0..(items[indice].area) as usize{// C/ITERACIÓN ES UN INDICE SIGUIENTE DEL ITEM DESDE EL INDICE i
-
-                //ESTO NOS GENERA LOS INDICES QUE DEBERÍAN ESTAR DISPONIBLES PARA GUARDAR EL ITEM PARTIENDO DESDE I
-                
-                //A PARTIR DE UN SOLO INDICE
-                let desde:f64 = i as f64; let len_f64:f64 = b.ancho as f64;
-                let reinicio_ancho: usize = (desde % len_f64) as usize; //SE REINICIA A CERO CADA QUE CAMBIA DE FILA.
-                let reinicio_alto: usize = (desde / len_f64).floor() as usize;
-                //DEBEN SER CONTIGUOS LOS ESPACIOS DEL ANCHO
-                let condicion_ancho:bool = (reinicio_ancho) as i32 + items[indice].ancho <= b.ancho;
-                let condicion_alto: bool =reinicio_alto as i32 + items[indice].alto <= b.alto;
-
-                if condicion_ancho && condicion_alto{ 
-                    let an_i: f64 = items[indice].ancho as f64; 
-                    let jump_fl:f64 = (j as f64 / an_i as f64).floor();
-                    let j_f64:f64 = j as f64;
-                    //ECUACIÓN PARA OBTENER EL INDICE DE 1DIMENSIÓN
-                    let ec = ((desde + (jump_fl * len_f64)) + j_f64 - (jump_fl * an_i)) as usize;
-                    //print!("ec: {}, desde: {}, j: {}", ec, i, j_f64);
-
-                    //NICE: AHORA NECESITAMOS QUE NOS GENERE LOS ESPACIOS DISPONIBLES A PARTIR DE 2 INDICES
-                    //OBTENEMOS LOS 2 INDICES A PARTIR DEL NUMERO DE 1 INDICE 
-                    
-                    let i_comp:usize= (ec as f64 / len_f64).floor() as usize;    
-                    let j_comp:usize= ec % len_f64 as usize;
-                    //print!(" i_comp:{}, j_comp: {}\n", i_comp, j_comp);
-                    //COMPROBAMOS QUE ESAS DIRECCIONES ESTÉN DISPONIBLES (0 es disponible)
-                    if ec >= b.area as usize {break}
-                    if bins_array[i_b as usize][i_comp][j_comp] == char::from_u32(48 as u32).unwrap(){
-                        //PARA ESO NECESITAMOS UN CONTADOR
-                        contador_disp+=1;
-                        coor_insert.push((i_comp, j_comp));
-                    }     
-                }
-                
-            }// END FOR QUE GENERA LOS INDICES Y VERIFICA SU DISPONIBILIDAD
+            verificar_disponibilidad_espacio(items, indice, i, b.clone(), bins_array, &i_b, &mut contador_disp, &mut coor_insert);//GENERA LOS INDICES Y VERIFICA SU DISPONIBILIDAD
 
             //SI ESTAN DISPONIBLES LO INSERTAMOS
             if contador_disp >= items[indice].area{
@@ -225,7 +251,10 @@ fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Re
                     //GUARDAMOS lA INFORMACIÓN DE INSERTADO EN UNA CADENA DE TEXTO
                 let contenido: String = format!("item:{}, contenedor: {}, fila:{}, col: {}\n", (indice+1), (i_b+1), coor_insert[0].0, coor_insert[0].1);
                 if VERBOSE == true{
+                    //MOSTRAMOS LA SOLUCIÓN DE ITEM EN PANTALLA
                     print!("{}", contenido);
+                    //GUARDAMOS LA SOLUCIÓN DEL ITEM EN LA LISTA DE SOLUCIONES
+                    lista_soluciones.push(contenido.clone());
                 }
                 //ABRIMOS/CREAMOS EL ARCHIVO DONDE GUARDAREMOS LA INFORMACIÓN DE INSERTADO
                 let mut archivo = OpenOptions::new().append(true).create(true).open(format!("solutions/sol-{}.txt", inst.titulo)).unwrap();
@@ -295,3 +324,4 @@ fn imprimir_items(items: &Vec<Rec>){
         println!("Item: {}, H: {}, W: {}, A:{}", (i+1), items[i].alto, items[i].ancho, items[i].area);
     }
 }
+

@@ -101,7 +101,25 @@ fn main() {
 
         //OBTENEMOS EL ITEM MAS GRANDE
         let larger_item: Rec = items[0].clone();
-        //LO MOVEMOS Y RESETEAMOS EL ESPACIO A 0s
+            //Obtenemos la posición del primer ITEM:
+        let sol_larger_item: Vec<&str> = lista_soluciones[0].split(",").collect();
+        //OBTENEMOS LOS COMPONENTES DE LA POSICIÓN DESDE LOS COMPONENTES DE LA SOLUCIÓN
+        let sentence_contenedor: Vec<&str> = sol_larger_item[1].split(":").collect();
+        let contenedor: i32 = sentence_contenedor[1].trim().parse::<i32>().unwrap();
+
+        let sentence_fila: Vec<&str> = sol_larger_item[2].split(":").collect();
+        let fila: i32 = sentence_fila[1].trim().parse::<i32>().unwrap();
+
+        let sentence_col: Vec<&str> = sol_larger_item[3].split(":").collect();
+        let col:i32 = sentence_col[1].trim().parse::<i32>().unwrap();
+        //MOVEMOS EL PRIMER ITEM Y RESETEAMOS EL ESPACIO A 0s
+
+        /* i es el primer espacio disponible, b es el contenedor, i_b es el índice del contenedor, indice es el indice del item dentro de la lista de items */
+
+        verificar_e_insertar_item_individual(larger_item, &mut bins_array, fila, col, 33 as char, &items, 0, bins[contenedor as usize -1].clone(), &(contenedor-1));
+
+        //mostrar_array(&bins_array[0], &bins[0]);            
+
             //PARA ESO USAMOS LA FUNCIÓN DE INSERTAR EN SU POCICION ACTUAL CEROS
         //QUITAMOS LOS ÚLTIMOS N ITEMS QUE QUEPAN EN EL AREA DEL ITEM DE MAYOR TAMAÑO Y RESETEAMOS SUS ESPACIOS A CERO
             //MOVEMOS ESOS ITEMS A UNA LISTA APARTE y al FINAL DE LA LISTA PONEMOS EL ÍTEM QUE MOVIMOS AL COMIENZI
@@ -113,32 +131,51 @@ fn main() {
             //PARA EMPEZAR NECESITAMOS GUARDAR LAS ANTERIORES EN UNA LISTA
             //ELIMINAMOS LOS ÍTEMS REORGANIZADOS
             //AGREGAMOS LOS NUEVOS
-
-               
-
-
     }    
 }
-fn insertar_item_individual(item: Rec,bins_array: &mut Vec<Vec<Vec<char>>>, fila: i32, col:i32, simbolo: char, items: &Vec<Rec>, indice_item: usize, bin:Rec, indice_cont: &i32){
+
+fn verificar_e_insertar_item_individual(item: Rec,bins_array: &mut Vec<Vec<Vec<char>>>, fila: i32, col:i32, simbolo: char, items: &Vec<Rec>, indice_item: usize, bin:Rec, indice_cont: &i32){
     let mut contador_disp:i32=0;
     let mut coor_insert: Vec<(usize, usize)> = Vec::new();
     //I LAS CORDENADAS DE SOLUCION DEL ITEM //SE SACAN DE LA LISTA DE SOLUCIONES
     let (i_c, j_c) = (0, 0) ; // SACA LOS COMPONENTES i y J DE LA SOLUCION
     let n_ec: usize = (bin.ancho as usize * i_c) + j_c;
 
-    let mut insertado: bool = false;
-    for i in n_ec..(bin.area as usize - (items[indice_item].area as usize ) ){ //RECORREMOS LOS ESPACIOS DISPONBIES. CADA ITERACIÓN ES UN POSIBLE LUGAR DONDE PONER EL ITEM
-        if insertado == true{ //SI YA FUE INSERTADO NOS SALIMOS DE LOS ESPACIOS DISPONIBLES
-            break;
-        }
-        verificar_disponibilidad_espacio(items, indice_item, i, bin.clone(), bins_array, indice_cont, &mut contador_disp, &mut coor_insert);//GENERA LOS INDICES Y VERIFICA SU DISPONIBILIDAD
+    let i = n_ec;
 
-        //SI ESTAN DISPONIBLES LO INSERTAMOS
+    verificar_disponibilidad_espacio(items, indice_item, i, bin.clone(), bins_array, indice_cont, &mut contador_disp, &mut coor_insert);//GENERA LOS INDICES Y VERIFICA SU DISPONIBILIDAD
 
-    }
+    println!("{:?}", coor_insert);
+    //SI ESTAN DISPONIBLES LO INSERTAMOS
+
 }
-//I ES EL PRIMER ESPACIO DISPONIBLE //B ES EL CONTENEDOR //I_B INDICE DEL CONTENEDOR
-//INDICE ES EL INDICE DEL ITEM DENTRO DE LA LISTA DE ITEMS
+fn insertar_item(coor_insert: &mut Vec<(usize, usize)>, indice:usize, bins_array: &mut Vec<Vec<Vec<char>>>, i_b: &i32, lista_soluciones: &mut Vec<String>, inst: &Instancia, insertado: &mut bool){
+    for (i_comp, j_comp) in coor_insert.clone(){
+        //AQUÍ INSERTAN LOS ITEMS EN LA MATRIZ
+            //REINICIEMOS LOS SÍMBOLOS DISPONIBLES CUANDO SE TERMINEN
+        let mut incremento = 33+(if indice >= 90{ indice-33} else {indice});
+            //EVITAMOS EL 0 PARA EVITAR CONFUCIONES
+        incremento = if incremento == 48 {33} else{incremento};
+
+        let character = char::from_u32(incremento as u32).unwrap();
+        bins_array[*i_b as usize][i_comp][j_comp] = character;
+    }
+    //SI LO INSERTAMOS, PONEMOS UNA VARIABLE BOOL DE INSERTADO
+        //GUARDAMOS lA INFORMACIÓN DE INSERTADO EN UNA CADENA DE TEXTO
+    let contenido: String = format!("item:{}, contenedor: {}, fila:{}, col: {}\n", (indice+1), (i_b+1), coor_insert[0].0, coor_insert[0].1);
+    if VERBOSE == true{
+        //MOSTRAMOS LA SOLUCIÓN DE ITEM EN PANTALLA
+        print!("{}", contenido);
+        //GUARDAMOS LA SOLUCIÓN DEL ITEM EN LA LISTA DE SOLUCIONES
+        lista_soluciones.push(contenido.clone());
+    }
+    //ABRIMOS/CREAMOS EL ARCHIVO DONDE GUARDAREMOS LA INFORMACIÓN DE INSERTADO
+    let mut archivo = OpenOptions::new().append(true).create(true).open(format!("solutions/sol-{}.txt", inst.titulo)).unwrap();
+    //ESCRIBIMOS LA INFORMACIÓN DE INSERTADO EN EL ARCHIVO
+    archivo.write_all(contenido.as_bytes()).unwrap();
+    *insertado=true;
+}
+/* i es el primer espacio disponible, b es el contenedor, i_b es el índice del contenedor, indice es el indice del item dentro de la lista de items */
 fn verificar_disponibilidad_espacio(items: &Vec<Rec>, indice: usize, i: usize, b: Rec, bins_array: &mut Vec<Vec<Vec<char>>>, i_b: &i32, contador_disp: &mut i32, coor_insert: &mut Vec<(usize, usize)>){
     for j in 0..(items[indice].area) as usize{// C/ITERACIÓN ES UN INDICE SIGUIENTE DEL ITEM DESDE EL INDICE i
 
@@ -237,30 +274,7 @@ fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Re
             //SI ESTAN DISPONIBLES LO INSERTAMOS
             if contador_disp >= items[indice].area{
                 //INSERTAR
-                for (i_comp, j_comp) in coor_insert.clone(){
-                    //AQUÍ INSERTAN LOS ITEMS EN LA MATRIZ
-                        //REINICIEMOS LOS SÍMBOLOS DISPONIBLES CUANDO SE TERMINEN
-                    let mut incremento = 33+(if indice >= 90{ indice-33} else {indice});
-                        //EVITAMOS EL 0 PARA EVITAR CONFUCIONES
-                    incremento = if incremento == 48 {33} else{incremento};
-
-                    let character = char::from_u32(incremento as u32).unwrap();
-                    bins_array[i_b as usize][i_comp][j_comp] = character;
-                }
-                //SI LO INSERTAMOS, PONEMOS UNA VARIABLE BOOL DE INSERTADO
-                    //GUARDAMOS lA INFORMACIÓN DE INSERTADO EN UNA CADENA DE TEXTO
-                let contenido: String = format!("item:{}, contenedor: {}, fila:{}, col: {}\n", (indice+1), (i_b+1), coor_insert[0].0, coor_insert[0].1);
-                if VERBOSE == true{
-                    //MOSTRAMOS LA SOLUCIÓN DE ITEM EN PANTALLA
-                    print!("{}", contenido);
-                    //GUARDAMOS LA SOLUCIÓN DEL ITEM EN LA LISTA DE SOLUCIONES
-                    lista_soluciones.push(contenido.clone());
-                }
-                //ABRIMOS/CREAMOS EL ARCHIVO DONDE GUARDAREMOS LA INFORMACIÓN DE INSERTADO
-                let mut archivo = OpenOptions::new().append(true).create(true).open(format!("solutions/sol-{}.txt", inst.titulo)).unwrap();
-                //ESCRIBIMOS LA INFORMACIÓN DE INSERTADO EN EL ARCHIVO
-                archivo.write_all(contenido.as_bytes()).unwrap();
-                insertado=true;
+                insertar_item(&mut coor_insert, indice, bins_array, &i_b, lista_soluciones, &inst, &mut insertado);
             }
             else{
                 //println!("No se insertó");

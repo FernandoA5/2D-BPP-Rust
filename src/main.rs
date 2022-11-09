@@ -104,6 +104,9 @@ fn main() {
             //Obtenemos la posición del primer ITEM:
         let sol_larger_item: Vec<&str> = lista_soluciones[0].split(",").collect();
         //OBTENEMOS LOS COMPONENTES DE LA POSICIÓN DESDE LOS COMPONENTES DE LA SOLUCIÓN
+        let sentence_n_item: Vec<&str> = sol_larger_item[0].split(":").collect();
+        let n_item: i32 = sentence_n_item[1].trim().parse::<i32>().unwrap();
+
         let sentence_contenedor: Vec<&str> = sol_larger_item[1].split(":").collect();
         let contenedor: i32 = sentence_contenedor[1].trim().parse::<i32>().unwrap();
 
@@ -113,10 +116,15 @@ fn main() {
         let sentence_col: Vec<&str> = sol_larger_item[3].split(":").collect();
         let col:i32 = sentence_col[1].trim().parse::<i32>().unwrap();
         //MOVEMOS EL PRIMER ITEM Y RESETEAMOS EL ESPACIO A 0s
+        let coor_insert: Vec<(i32, i32)> = Vec::new();
+
+        //CALCULAMOS LA COORDENADA LINEAL DEL PUNTO DONDE SE COMENZARÁ A INSERTAR EL ITEM
+        let coor_lineal_primer_espacio = obtener_coordenada_lineal(fila as usize, col as usize, bins[contenedor as usize-1].clone());
 
         /* i es el primer espacio disponible, b es el contenedor, i_b es el índice del contenedor, indice es el indice del item dentro de la lista de items */
+        //verificar_disponibilidad_espacio(&items, n_item-1, coor_lineal_primer_espacio, b, &mut bins_array, i_b, contador_disp, coor_insert, caracter)
+        //insertar_item(&(fila, col), indice, &mut bins_array, i_b, &mut lista_soluciones, &inst, insertado );
 
-        verificar_e_insertar_item_individual(larger_item, &mut bins_array, fila, col, 33 as char, &items, 0, bins[contenedor as usize -1].clone(), &(contenedor-1));
 
         //mostrar_array(&bins_array[0], &bins[0]);            
 
@@ -134,22 +142,25 @@ fn main() {
     }    
 }
 
-fn verificar_e_insertar_item_individual(item: Rec,bins_array: &mut Vec<Vec<Vec<char>>>, fila: i32, col:i32, simbolo: char, items: &Vec<Rec>, indice_item: usize, bin:Rec, indice_cont: &i32){
+fn verificar_e_insertar_item_individual(item: Rec,bins_array: &mut Vec<Vec<Vec<char>>>, fila: i32, col:i32, simbolo: char, items: &Vec<Rec>, indice_item: usize, bin:Rec, indice_cont: &i32, caracter: char){
     let mut contador_disp:i32=0;
     let mut coor_insert: Vec<(usize, usize)> = Vec::new();
-    //I LAS CORDENADAS DE SOLUCION DEL ITEM //SE SACAN DE LA LISTA DE SOLUCIONES
-    let (i_c, j_c) = (0, 0) ; // SACA LOS COMPONENTES i y J DE LA SOLUCION
-    let n_ec: usize = (bin.ancho as usize * i_c) + j_c;
 
-    let i = n_ec;
+    let i = obtener_coordenada_lineal(fila as usize, col as usize, bin.clone());
 
-    verificar_disponibilidad_espacio(items, indice_item, i, bin.clone(), bins_array, indice_cont, &mut contador_disp, &mut coor_insert);//GENERA LOS INDICES Y VERIFICA SU DISPONIBILIDAD
+    verificar_disponibilidad_espacio(items, indice_item, i, bin.clone(), bins_array, indice_cont, &mut contador_disp, &mut coor_insert, caracter);//GENERA LOS INDICES Y VERIFICA SU DISPONIBILIDAD
 
     println!("{:?}", coor_insert);
     //SI ESTAN DISPONIBLES LO INSERTAMOS
 
 }
-fn insertar_item(coor_insert: &mut Vec<(usize, usize)>, indice:usize, bins_array: &mut Vec<Vec<Vec<char>>>, i_b: &i32, lista_soluciones: &mut Vec<String>, inst: &Instancia, insertado: &mut bool){
+fn obtener_coordenada_lineal(coor_i: usize, coor_j: usize, bin:Rec) -> usize{
+    
+    let (i_c, j_c) = (coor_i, coor_j); // SACA LOS COMPONENTES i y J DE EL PRIMER ESPACIO DISPONIBLE
+    let n_ec: usize = (bin.ancho as usize * i_c) + j_c; //CONVIERTE EN NUMERO LINEAL LAS COORDENADAS 
+    n_ec
+}
+fn insertar_item(coor_insert: &Vec<(usize, usize)>, indice:usize, bins_array: &mut Vec<Vec<Vec<char>>>, i_b: &i32, lista_soluciones: &mut Vec<String>, inst: &Instancia, insertado: &mut bool){
     for (i_comp, j_comp) in coor_insert.clone(){
         //AQUÍ INSERTAN LOS ITEMS EN LA MATRIZ
             //REINICIEMOS LOS SÍMBOLOS DISPONIBLES CUANDO SE TERMINEN
@@ -176,7 +187,7 @@ fn insertar_item(coor_insert: &mut Vec<(usize, usize)>, indice:usize, bins_array
     *insertado=true;
 }
 /* i es el primer espacio disponible, b es el contenedor, i_b es el índice del contenedor, indice es el indice del item dentro de la lista de items */
-fn verificar_disponibilidad_espacio(items: &Vec<Rec>, indice: usize, i: usize, b: Rec, bins_array: &mut Vec<Vec<Vec<char>>>, i_b: &i32, contador_disp: &mut i32, coor_insert: &mut Vec<(usize, usize)>){
+fn verificar_disponibilidad_espacio(items: &Vec<Rec>, indice: usize, i: usize, b: Rec, bins_array: &mut Vec<Vec<Vec<char>>>, i_b: &i32, contador_disp: &mut i32, coor_insert: &mut Vec<(usize, usize)>, caracter: char){
     for j in 0..(items[indice].area) as usize{// C/ITERACIÓN ES UN INDICE SIGUIENTE DEL ITEM DESDE EL INDICE i
 
         //ESTO NOS GENERA LOS INDICES QUE DEBERÍAN ESTAR DISPONIBLES PARA GUARDAR EL ITEM PARTIENDO DESDE I
@@ -204,7 +215,7 @@ fn verificar_disponibilidad_espacio(items: &Vec<Rec>, indice: usize, i: usize, b
             //print!(" i_comp:{}, j_comp: {}\n", i_comp, j_comp);
             //COMPROBAMOS QUE ESAS DIRECCIONES ESTÉN DISPONIBLES (0 es disponible)
             if ec >= b.area as usize {break}
-            if bins_array[*i_b as usize][i_comp][j_comp] == char::from_u32(48 as u32).unwrap(){
+            if bins_array[*i_b as usize][i_comp][j_comp] == caracter{
                 //PARA ESO NECESITAMOS UN CONTADOR
                 *contador_disp+=1;
                 coor_insert.push((i_comp, j_comp));
@@ -257,9 +268,9 @@ fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Re
         }
         //REVISAR QUE LOS ESPACIOS VACIÓS SEAN USABLES POR EL ITEM
 
+        let n_ec: usize = obtener_coordenada_lineal(disp[0].0, disp[0].1, b.clone());
+
         //RECORREMOS LOS ESPACIOS DISPONBIES, MENOS LOS ÚLTIMOS (AREA DEL RECTANGULO) PORQUE COMPARAMOS CADA I CON SUS (AREA DEL RECTANGULO) SIGUIENTES
-        let (i_c, j_c) = disp[0]; // SACA LOS COMPONENTES i y J DE EL PRIMER ESPACIO DISPONIBLE
-        let n_ec: usize = (b.ancho as usize * i_c) + j_c; //CONVIERTE EN NUMERO LINEAL LAS COORDENADAS 
         for i in n_ec..(b.area as usize - (items[indice].area as usize ) ){ //RECORREMOS LOS ESPACIOS DISPONBIES. CADA ITERACIÓN ES UN POSIBLE LUGAR DONDE PONER EL ITEM
             if insertado == true{ //SI YA FUE INSERTADO NOS SALIMOS DE LOS ESPACIOS DISPONIBLES
                 break;
@@ -269,7 +280,7 @@ fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Re
             let mut coor_insert: Vec<(usize, usize)> = Vec::new();
 
             //COMPARAMOS CADA I CON (SUS AREA DEL RECTANGULO) SIGUIENTES
-            verificar_disponibilidad_espacio(items, indice, i, b.clone(), bins_array, &i_b, &mut contador_disp, &mut coor_insert);//GENERA LOS INDICES Y VERIFICA SU DISPONIBILIDAD
+            verificar_disponibilidad_espacio(items, indice, i, b.clone(), bins_array, &i_b, &mut contador_disp, &mut coor_insert, '0');//GENERA LOS INDICES Y VERIFICA SU DISPONIBILIDAD
 
             //SI ESTAN DISPONIBLES LO INSERTAMOS
             if contador_disp >= items[indice].area{

@@ -109,6 +109,7 @@ fn main() {
 
         let sentence_contenedor: Vec<&str> = sol_larger_item[1].split(":").collect();
         let contenedor: i32 = sentence_contenedor[1].trim().parse::<i32>().unwrap();
+        let i_contenedor: usize = contenedor as usize -1;
 
         let sentence_fila: Vec<&str> = sol_larger_item[2].split(":").collect();
         let fila: i32 = sentence_fila[1].trim().parse::<i32>().unwrap();
@@ -119,10 +120,10 @@ fn main() {
         let coor_insert: Vec<(i32, i32)> = Vec::new();
 
         //CALCULAMOS LA COORDENADA LINEAL DEL PUNTO DONDE SE COMENZARÁ A INSERTAR EL ITEM
-        let coor_lineal_primer_espacio = obtener_coordenada_lineal(fila as usize, col as usize, bins[contenedor as usize-1].clone());
-
+        let coor_lineal_primer_espacio = obtener_coordenada_lineal(fila as usize, col as usize, bins[i_contenedor].clone());
+        let mut contador_disp: i32 = 0;
         /* i es el primer espacio disponible, b es el contenedor, i_b es el índice del contenedor, indice es el indice del item dentro de la lista de items */
-        //verificar_disponibilidad_espacio(&items, n_item-1, coor_lineal_primer_espacio, b, &mut bins_array, i_b, contador_disp, coor_insert, caracter)
+        //verificar_disponibilidad_espacio(&items, n_item-1, coor_lineal_primer_espacio, bins[i_contenedor].clone(), &mut bins_array, i_contenedor, &mut contador_disp, coor_insert, caracter)
         //insertar_item(&(fila, col), indice, &mut bins_array, i_b, &mut lista_soluciones, &inst, insertado );
 
 
@@ -160,15 +161,20 @@ fn obtener_coordenada_lineal(coor_i: usize, coor_j: usize, bin:Rec) -> usize{
     let n_ec: usize = (bin.ancho as usize * i_c) + j_c; //CONVIERTE EN NUMERO LINEAL LAS COORDENADAS 
     n_ec
 }
+fn calcular_caracter_de_item(indice: usize) -> char{
+     //REINICIEMOS LOS SÍMBOLOS DISPONIBLES CUANDO SE TERMINEN
+    let mut incremento = 33+(if indice >= 90{ indice-33} else {indice}); //SI LOS CARACTERES SE SALEN DE RANGO 2 VECES EL REINÍCIO YA NO SERVIRÁ
+
+    //CAMBIAMOS EL CERO POR OTRO SÍMBOLO PARA EVITAR AMBIGUEDADES
+    incremento = if incremento == 48 {33} else{incremento};
+    let character:char = char::from_u32(incremento as u32).unwrap();
+    character
+}
 fn insertar_item(coor_insert: &Vec<(usize, usize)>, indice:usize, bins_array: &mut Vec<Vec<Vec<char>>>, i_b: &i32, lista_soluciones: &mut Vec<String>, inst: &Instancia, insertado: &mut bool){
     for (i_comp, j_comp) in coor_insert.clone(){
         //AQUÍ INSERTAN LOS ITEMS EN LA MATRIZ
-            //REINICIEMOS LOS SÍMBOLOS DISPONIBLES CUANDO SE TERMINEN
-        let mut incremento = 33+(if indice >= 90{ indice-33} else {indice});
-            //EVITAMOS EL 0 PARA EVITAR CONFUCIONES
-        incremento = if incremento == 48 {33} else{incremento};
 
-        let character = char::from_u32(incremento as u32).unwrap();
+        let character = calcular_caracter_de_item(indice);
         bins_array[*i_b as usize][i_comp][j_comp] = character;
     }
     //SI LO INSERTAMOS, PONEMOS UNA VARIABLE BOOL DE INSERTADO

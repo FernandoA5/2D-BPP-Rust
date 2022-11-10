@@ -1,6 +1,7 @@
 pub mod rectangulo;
 pub mod lector_instancias;
 
+use rand::Rng;
 use rectangulo::Rectangulo as Rec;
 use lector_instancias::Instancia;
 
@@ -71,13 +72,14 @@ fn main() {
         
         //CREAMOS LA LISTA DE STRINGS QUE REPRESENTAN LA SOLUCIÓN:
         let mut lista_soluciones: Vec<String> = Vec::new();
+        let mut iteracion_constructiva = 0;
         let num_inicial = lista_soluciones.len();
         //COMENZAR A ALMACENAR LOS ITEMS EN LOS CONTENEDORES
-        let items_acomodados:i32=colocar_items(&items, &bins, &mut bins_array, &inst, &mut lista_soluciones, true, num_inicial);
+        let items_acomodados:i32=colocar_items(&items, &bins, &mut bins_array, &mut lista_soluciones, true, num_inicial);
         println!("Items insertados: {}", items_acomodados);
         //MOSTRAR LO HECHO EN PANTALLA -> PODEMOS IMPRIMIR INDIVIDUALMENTE CADA CONTENEDOR
 
-        mostrar_contenedores_llenos(&mut bins_array, &bins);
+        let (cont_usados, wasted_space) = mostrar_contenedores_llenos(&mut bins_array, &bins);
 
         if (items_acomodados as usize) < items.len() {
             println!("No se pudieron insertar todos los items");
@@ -86,59 +88,127 @@ fn main() {
         println!("Tiempo: {:?}", new_now.duration_since(now));
 
 
-        println!("------------Heuristica de mejora-------------------- \n");
-        //AQUÍ EMPEZAMOS CON LA HEURÍSTICA DE MEJORA
-            //NECESITAMOS LA LISTA DE ITEMS
-            //NECESITAMOS LOS CONTENEDORES
-            //NECESITAMOS LA LISTA DE SOLUCIONES PARA CADA ITEM
-
-        //OBTENEMOS EL ITEM MAS GRANDE
-        let larger_item:Rec = items[0].clone();
-        //OBTENEMOS LOS COMPONENTES DE POSICION DEL ITEM DESDE LA SOLUCIÓN
-        let (n_item, i_contenedor, i_contenedor_i32, fila, col) = obtener_datos_de_solucion(&mut lista_soluciones, 0);
-        //MOVEMOS EL PRIMER ITEM Y RESETEAMOS EL ESPACIO A 0s
-        let _caracter = calcular_caracter_de_item(n_item-1);
-
+        let (mut new_cont_usados, mut new_wasted_space): (i32, i32);
+        let sol_inicial: Vec<String> = lista_soluciones.clone();
+        let mut bins_array_inicial: Vec<Vec<Vec<char>>> = bins_array.clone();
+        let improve_heuristic_now = Instant::now();  
         
-        //LIMPIAMOS LOS INDICES DEL ITEM MAS GRANDE, PARA QUE ESTÉN EN 0s
-        print!("Cleaning:");
-        verificar_e_insertar_item_individual(&mut bins_array, fila, col, &items, n_item-1, bins[i_contenedor].clone(), &i_contenedor_i32, '0', &mut lista_soluciones, &inst, false, num_inicial);
+        loop{
+            println!("------------Heuristica de mejora. Iter: {}-------------------- \n", iteracion_constructiva);
+            //AQUÍ EMPEZAMOS CON LA HEURÍSTICA DE MEJORA
+            let i_remp = rand::thread_rng().gen_range(0..items.len()-1);
 
-        //QUITAMOS LOS ÚLTIMOS N ITEMS QUE QUEPAN EN EL AREA DEL ITEM DE MAYOR TAMAÑO Y RESETEAMOS SUS ESPACIOS A CERO
+            println!("i_remp: {}", i_remp);
+            println!("Iter_conts: {}", iteracion_constructiva);
+            //OBTENEMOS EL ITEM MAS GRANDE
+            let larger_item:Rec = items[i_remp].clone();
+            //OBTENEMOS LOS COMPONENTES DE POSICION DEL ITEM DESDE LA SOLUCIÓN
+            
+            let (n_item, i_contenedor, i_contenedor_i32, fila, col) = obtener_datos_de_solucion(&mut lista_soluciones, i_remp);
+            //MOVEMOS EL PRIMER ITEM Y RESETEAMOS EL ESPACIO A 0s
+            let _caracter = calcular_caracter_de_item(n_item-1);
 
-        //PRIMERO HAY QUE OBTENER ESOS N ITEMS
-        let mut num_nuevo_primer_item: i32 = 0;
-        let items_to_move: Vec<Rec> = obtener_items_to_move(&items, &larger_item, &mut num_nuevo_primer_item); //LISTA DE ITEMS PARA MOVER (NO INCLUYE EL QUE SE MÁS GRANDE QUE SE QUITÓ)
-        //LA FUNCIÓN TAMBIÉN ACTUALIZA EL NUMERO DEL ITEM DESDE DONDE SE CONTINUARÁ LA INSERICIÓN
-        
-        let mut indice = num_nuevo_primer_item;
-        for _item in 0..items_to_move.len(){
-            let (n_item, i_contenedor, i_contenedor_i32, fila, col) = obtener_datos_de_solucion(&mut lista_soluciones, indice as usize);
-            //LIMPIAMOS ESOS ITEMS A 0s
+            
+            //LIMPIAMOS LOS INDICES DEL ITEM MAS GRANDE, PARA QUE ESTÉN EN 0s
             print!("Cleaning:");
-            verificar_e_insertar_item_individual(&mut bins_array, fila, col, &items, n_item-1, bins[i_contenedor].clone(), &i_contenedor_i32, '0', &mut lista_soluciones, &inst, false, num_inicial);
+            verificar_e_insertar_item_individual(&mut bins_array, fila, col, &items, n_item-1, bins[i_contenedor].clone(), &i_contenedor_i32, '0', &mut lista_soluciones, false, num_inicial);
 
-            indice +=1;
+            //QUITAMOS LOS ÚLTIMOS N ITEMS QUE QUEPAN EN EL AREA DEL ITEM DE MAYOR TAMAÑO Y RESETEAMOS SUS ESPACIOS A CERO
+
+            //PRIMERO HAY QUE OBTENER ESOS N ITEMS
+            let mut num_nuevo_primer_item: i32 = 0;
+            let items_to_move: Vec<Rec> = obtener_items_to_move(&items, &larger_item, &mut num_nuevo_primer_item); //LISTA DE ITEMS PARA MOVER (NO INCLUYE EL QUE SE MÁS GRANDE QUE SE QUITÓ)
+            //LA FUNCIÓN TAMBIÉN ACTUALIZA EL NUMERO DEL ITEM DESDE DONDE SE CONTINUARÁ LA INSERICIÓN
+            
+            let mut indice = num_nuevo_primer_item;
+            for _item in 0..items_to_move.len(){
+                let (n_item, i_contenedor, i_contenedor_i32, fila, col) = obtener_datos_de_solucion(&mut lista_soluciones, indice as usize);
+                //LIMPIAMOS ESOS ITEMS A 0s
+                print!("Cleaning:");
+                verificar_e_insertar_item_individual(&mut bins_array, fila, col, &items, n_item-1, bins[i_contenedor].clone(), &i_contenedor_i32, '0', &mut lista_soluciones, false, num_inicial);
+
+                indice +=1;
+            }
+            eliminar_soluciones_obsoletas(&mut lista_soluciones, num_nuevo_primer_item as usize);
+            
+            //ACOMODAMOS LOS ITEMS CON EL ALGORITMO INICIAL. FUNCION: acomodar()
+            //COMENZAR A ALMACENAR LOS ITEMS EN LOS CONTENEDORES
+            let num_inicial = lista_soluciones.len();
+            //GUARTAR EN LA LISTA DE ITEMS A INSERTAR EL LARGER ITEM:
+            let items_acomodados:i32=colocar_items(&items_to_move, &bins, &mut bins_array, &mut lista_soluciones, true, num_inicial);
+
+            //INSERTAMOS EL ÚLTIMO ITEM
+            let mut ultimo_item: Vec<Rec> = Vec::new();
+            ultimo_item.push(larger_item);
+            let ultimo_item:i32 = colocar_items(&ultimo_item, bins, &mut bins_array, &mut lista_soluciones, true, i_remp);
+            
+            //IMPRIMIR NUEVAS SOLUCIONES
+            println!("Items insertados: {}", items_acomodados+ultimo_item);
+
+            //ORGANIZAMOS LA LISTA DE SOLUCIONES 
+            lista_soluciones.remove(i_remp);
+            ordenar_lista_soluciones(&mut lista_soluciones);
+            
+            (new_cont_usados, new_wasted_space) = contar_contenedores_usados(&mut bins_array, &bins);
+            //CRITERIO DE SALIDA
+                //NECESITAMOS 2 COSAS CONTENEDORES USADOS y ESPACIO DESPERDICIADO
+            if new_cont_usados < cont_usados || new_wasted_space < wasted_space || iteracion_constructiva >= 1200{
+                break;
+            }
+            iteracion_constructiva+=1;
         }
-        eliminar_soluciones_obsoletas(&mut lista_soluciones, num_nuevo_primer_item as usize);
-        
-        //ACOMODAMOS LOS ITEMS CON EL ALGORITMO INICIAL. FUNCION: acomodar()
-        //COMENZAR A ALMACENAR LOS ITEMS EN LOS CONTENEDORES
-        let num_inicial = lista_soluciones.len();
-        //GUARTAR EN LA LISTA DE ITEMS A INSERTAR EL LARGER ITEM:
-        let items_acomodados:i32=colocar_items(&items_to_move, &bins, &mut bins_array, &inst, &mut lista_soluciones, true, num_inicial);
 
-        //INSERTAMOS EL ÚLTIMO ITEM
-        let mut ultimo_item: Vec<Rec> = Vec::new();
-        let num_inicial = ultimo_item.len();
-        ultimo_item.push(larger_item);
-        let ultimo_item:i32 = colocar_items(&ultimo_item, bins, &mut bins_array, &inst, &mut lista_soluciones, true, num_inicial);
-        
-        //IMPRIMIR NUEVAS SOLUCIONES
-        println!("Items insertados: {}", items_acomodados+ultimo_item);
-        
-        mostrar_contenedores_llenos(&mut bins_array, &bins);
+        if new_cont_usados < cont_usados || new_wasted_space < wasted_space{
+            println!("Mejor solución encontrada:\nContenedores_usados: {}, Espacio Desperdiciado: {} vs Contenedores_usados_iniciales: {}. Espacio Desperdiciado inicial: {}", new_cont_usados, cont_usados, cont_usados, wasted_space);
+            println!("Mejor Solución: ");
+            for sol in lista_soluciones{
+                println!("{}", sol);
+                guardar_soluciones_en_fichero(&inst, iteracion_constructiva, sol);
+            }
+            mostrar_contenedores_llenos(&mut bins_array, bins);
+        }
+        else{
+            println!("No se encontró una mejor solución:\n Conenedores_usados: {}, Espacio Desperdiciado: {}", cont_usados, wasted_space);
+            println!("Mejor Solución: ");
+            for sol in sol_inicial{
+                println!("{}", sol);
+                guardar_soluciones_en_fichero(&inst, iteracion_constructiva, sol);
+            }
+            mostrar_contenedores_llenos(&mut bins_array_inicial, bins);
+        }
+        let new_improve_heuristic_now = Instant::now(); 
+        println!("Tiempo: {:?}", new_improve_heuristic_now.duration_since(improve_heuristic_now));
+
     }    
+}
+fn guardar_soluciones_en_fichero(inst: &Instancia, iteracion_constructiva: usize, contenido: String){
+    //ABRIMOS/PREPARAMOS EL ARCHIVO DONDE GUARDAREMOS LAS SOLUCIONES
+    let mut archivo = OpenOptions::new().create(true).write(true).open(format!("solutions/sol-{}.txt", inst.titulo)).unwrap();
+    archivo.write_all("".as_bytes()).unwrap();
+    //ABRIMOS/CREAMOS EL ARCHIVO DONDE GUARDAREMOS LA INFORMACIÓN DE INSERTADO
+    let mut archivo = OpenOptions::new().append(true).create(true).open(format!("solutions/{}-sol-{}.txt", iteracion_constructiva,inst.titulo)).unwrap();
+    //ESCRIBIMOS LA INFORMACIÓN DE INSERTADO EN EL ARCHIVO
+    archivo.write_all(contenido.as_bytes()).unwrap();
+
+}
+fn ordenar_lista_soluciones(lista_soluciones: &mut Vec<String>){
+    let mut aux: String;
+    for i in 0..lista_soluciones.len(){
+        for j in 0..lista_soluciones.len(){
+            let sol_i_comp: Vec<&str> = lista_soluciones[i].split(",").collect();
+            let sentence_n_item_i: Vec<&str> = sol_i_comp[0].split(":").collect();
+            let n_item_i: usize = sentence_n_item_i[1].trim().parse::<i32>().unwrap() as usize;
+
+            let sol_j_comp: Vec<&str> = lista_soluciones[j].split(",").collect();
+            let sentence_n_item_j: Vec<&str> = sol_j_comp[0].split(":").collect();
+            let n_item_j: usize = sentence_n_item_j[1].trim().parse::<i32>().unwrap() as usize;
+            if n_item_i < n_item_j{
+                aux = lista_soluciones[j].clone();
+                lista_soluciones[j] = lista_soluciones[i].clone();
+                lista_soluciones[i] = aux.clone();
+            }
+        }
+    }
 }
 fn eliminar_soluciones_obsoletas(lista_soluciones: &mut Vec<String>, indice: usize){
     //println!("{}", lista_soluciones.len());
@@ -153,10 +223,11 @@ fn eliminar_soluciones_obsoletas(lista_soluciones: &mut Vec<String>, indice: usi
         contador+=1;
     }
 }
-fn mostrar_contenedores_llenos(bins_array: &mut Vec<Vec<Vec<char>>>, bins: &Vec<Rec>){
-    let cont_usados:i32 = contar_contenedores_usados(bins_array, &bins);
+fn mostrar_contenedores_llenos(bins_array: &mut Vec<Vec<Vec<char>>>, bins: &Vec<Rec>) -> (i32, i32){
+    let (cont_usados,  wasted_space) = contar_contenedores_usados(bins_array, &bins);
         
     println!("Contenedores usados: {}", cont_usados); let mut i_bin =0;
+    println!("Espacio desperdiciado: {}", wasted_space);
     if VERBOSE == true {
         for bin in bins{
             println!("Contenedor: {}", i_bin+1);
@@ -164,6 +235,7 @@ fn mostrar_contenedores_llenos(bins_array: &mut Vec<Vec<Vec<char>>>, bins: &Vec<
             i_bin +=1;
         }
     }
+    (cont_usados, wasted_space)
 }
 fn obtener_datos_de_solucion(lista_soluciones: &mut Vec<String>, indice_sol: usize) -> (usize, usize, i32, i32, i32){
     let sol_larger_item: Vec<&str> = lista_soluciones[indice_sol].split(",").collect();
@@ -200,7 +272,7 @@ fn obtener_items_to_move(items: &Vec<Rec>, larger_item: &Rec, num_nuevo_primer_i
     items_to_move.reverse();
     items_to_move //RETORNAMOS EL ITEM
 }
-fn verificar_e_insertar_item_individual(bins_array: &mut Vec<Vec<Vec<char>>>, fila: i32, col:i32, items: &Vec<Rec>, indice_item: usize, bin:Rec, indice_cont: &i32, caracter: char, lista_soluciones: &mut Vec<String>, inst: &Instancia, gen_sol: bool, num_inicial: usize){
+fn verificar_e_insertar_item_individual(bins_array: &mut Vec<Vec<Vec<char>>>, fila: i32, col:i32, items: &Vec<Rec>, indice_item: usize, bin:Rec, indice_cont: &i32, caracter: char, lista_soluciones: &mut Vec<String>, gen_sol: bool, num_inicial: usize){
     let mut contador_disp:i32=0;
     let mut coor_insert: Vec<(usize, usize)> = Vec::new();
 
@@ -217,8 +289,9 @@ fn verificar_e_insertar_item_individual(bins_array: &mut Vec<Vec<Vec<char>>>, fi
     let mut insertado=false;
     //SI ESTAN DISPONIBLES LO INSERTAMOS
     //println!("{}", coor_insert.len());
-    insertar_item(&coor_insert, indice_item, bins_array, indice_cont, lista_soluciones, inst, &mut insertado, caracter, gen_sol, num_inicial);
-    
+    if contador_disp > 0 {
+        insertar_item(&coor_insert, indice_item, bins_array, indice_cont, lista_soluciones, &mut insertado, caracter, gen_sol, num_inicial);
+    }
     //mostrar_array(&bins_array[*indice_cont as usize], &bin);
 
 }
@@ -236,13 +309,14 @@ fn calcular_caracter_de_item(indice: usize) -> char{
     let character:char = char::from_u32(incremento as u32).unwrap();
     character
 }
-fn insertar_item(coor_insert: &Vec<(usize, usize)>, indice:usize, bins_array: &mut Vec<Vec<Vec<char>>>, i_b: &i32, lista_soluciones: &mut Vec<String>, inst: &Instancia, insertado: &mut bool, caracter: char, gen_sol: bool, num_inicial: usize){
+fn insertar_item(coor_insert: &Vec<(usize, usize)>, indice:usize, bins_array: &mut Vec<Vec<Vec<char>>>, i_b: &i32, lista_soluciones: &mut Vec<String>, insertado: &mut bool, caracter: char, gen_sol: bool, num_inicial: usize){
     for (i_comp, j_comp) in coor_insert.clone(){
         //AQUÍ INSERTAN LOS ITEMS EN LA MATRIZ
         bins_array[*i_b as usize][i_comp][j_comp] = caracter;
     }
     //SI LO INSERTAMOS, PONEMOS UNA VARIABLE BOOL DE INSERTADO
         //GUARDAMOS lA INFORMACIÓN DE INSERTADO EN UNA CADENA DE TEXTO
+    
     let contenido: String = format!("item:{}, contenedor: {}, fila:{}, col: {}\n", num_inicial+indice+1, (i_b+1), coor_insert[0].0, coor_insert[0].1);
     if VERBOSE == true{
         //MOSTRAMOS LA SOLUCIÓN DE ITEM EN PANTALLA
@@ -252,13 +326,8 @@ fn insertar_item(coor_insert: &Vec<(usize, usize)>, indice:usize, bins_array: &m
             lista_soluciones.push(contenido.clone());
         }
     }
-    //ABRIMOS/CREAMOS EL ARCHIVO DONDE GUARDAREMOS LA INFORMACIÓN DE INSERTADO
-    let mut archivo = OpenOptions::new().append(true).create(true).open(format!("solutions/sol-{}.txt", inst.titulo)).unwrap();
-    //ESCRIBIMOS LA INFORMACIÓN DE INSERTADO EN EL ARCHIVO
-    archivo.write_all(contenido.as_bytes()).unwrap();
     *insertado=true;
 }
-/* i es el primer espacio disponible, b es el contenedor, i_b es el índice del contenedor, indice es el indice del item dentro de la lista de items */
 fn verificar_disponibilidad_espacio(items: &Vec<Rec>, indice: usize, i: usize, b: Rec, bins_array: &mut Vec<Vec<Vec<char>>>, i_b: &i32, contador_disp: &mut i32, coor_insert: &mut Vec<(usize, usize)>, caracter: char){
     for j in 0..(items[indice].area) as usize{// C/ITERACIÓN ES UN INDICE SIGUIENTE DEL ITEM DESDE EL INDICE i
         
@@ -296,12 +365,8 @@ fn verificar_disponibilidad_espacio(items: &Vec<Rec>, indice: usize, i: usize, b
         
     }
 }
-fn colocar_items(items: &Vec<Rec>, bins: &Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, inst:&Instancia, lista_soluciones: &mut Vec<String>, gen_sol: bool, num_inicial: usize)->i32{
+fn colocar_items(items: &Vec<Rec>, bins: &Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, lista_soluciones: &mut Vec<String>, gen_sol: bool, num_inicial: usize)->i32{
        
-    //ABRIMOS/PREPARAMOS EL ARCHIVO DONDE GUARDAREMOS LAS SOLUCIONES
-    let mut archivo = OpenOptions::new().create(true).write(true).open(format!("solutions/sol-{}.txt", inst.titulo)).unwrap();
-    archivo.write_all("".as_bytes()).unwrap();
-
     let mut acomodados: i32 =0; //CONTADOR Y DE ITEMS ACOMODADOS
     //INICIALIZAMOS LOS BINS CON 0s
     if bins_array.len() == 0{ //ASÍ EVITAMOS CREAR MAS CONTENEDORES EN LA HEURISTICA DE MEJORA
@@ -311,13 +376,13 @@ fn colocar_items(items: &Vec<Rec>, bins: &Vec<Rec>, bins_array: &mut Vec<Vec<Vec
     }
     //RECORREMOS LOS ITEMS Y ACOMODAMOS UNO POR UNO
     for i in 0..items.len() { 
-        if acomodar(bins.clone(), bins_array, items, i, &inst, lista_soluciones, gen_sol, num_inicial) == true{
+        if acomodar(bins.clone(), bins_array, items, i, lista_soluciones, gen_sol, num_inicial) == true{
             acomodados+=1;
         }
     }
     acomodados
 }
-fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Rec>, indice: usize, inst: &Instancia, lista_soluciones: &mut Vec<String>, gen_sol: bool, num_inicial:usize) -> bool{
+fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Rec>, indice: usize, lista_soluciones: &mut Vec<String>, gen_sol: bool, num_inicial:usize) -> bool{
     let mut insertado: bool = false;
     let mut i_b: i32 = -1; //Indice Del Contenedor, Empieza en -1 POR ALGUNA RAZÓN
     for b in bins{//RECORREMOS LOS CONTENEDORES B ES EL CONTENEDOR
@@ -357,10 +422,10 @@ fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Re
             verificar_disponibilidad_espacio(items, indice, i, b.clone(), bins_array, &i_b, &mut contador_disp, &mut coor_insert, '0');//GENERA LOS INDICES Y VERIFICA SU DISPONIBILIDAD
 
             //SI ESTAN DISPONIBLES LO INSERTAMOS
-            if contador_disp >= items[indice].area{
+            if contador_disp >= items[indice].area {
                 //INSERTAR
                 let caracter = calcular_caracter_de_item(num_inicial+indice);
-                insertar_item(&mut coor_insert, indice, bins_array, &i_b, lista_soluciones, &inst, &mut insertado, caracter, gen_sol, num_inicial);
+                insertar_item(&mut coor_insert, indice, bins_array, &i_b, lista_soluciones, &mut insertado, caracter, gen_sol, num_inicial);
             }
             else{
                 //println!("No se insertó");
@@ -372,9 +437,10 @@ fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Re
     }//END DEL FOR QUE RECORRE LOS CONTENEDORES
     return insertado;
 }
-fn contar_contenedores_usados(bins_array: &mut Vec<Vec<Vec<char>>>, bins: &Vec<Rec>) -> i32{
+fn contar_contenedores_usados(bins_array: &mut Vec<Vec<Vec<char>>>, bins: &Vec<Rec>) -> (i32, i32){
     let mut cont_usados: i32 = 0;
-    for i in 0..bins_array.len(){
+    let mut wasted_space: i32 =0;
+        for i in 0..bins_array.len(){
         let mut usado: bool = false;
         for j in 0..bins[i].alto as usize{
             if usado == true {break}
@@ -383,10 +449,20 @@ fn contar_contenedores_usados(bins_array: &mut Vec<Vec<Vec<char>>>, bins: &Vec<R
                 usado = if bins_array[i][j][k] != char::from_u32(48 as u32).unwrap()
                 { true } else {false}
             }
+            
         }
         cont_usados += if usado == true {1} else {0}
     }
-    cont_usados
+    for i in 0..cont_usados as usize{
+        for j in 0..bins[i].alto as usize{
+            for k in 0..bins[i].ancho as usize{
+                if bins_array[i][j][k] == char::from_u32(48 as u32).unwrap(){
+                    wasted_space += 1;
+                }
+            }
+        }
+    }
+    (cont_usados, wasted_space)
 }
 fn inicializar_space_array(w_a: &Rec)->Vec<Vec<char>>{
     let mut w_a_space: Vec<Vec<char>> = Vec::new();

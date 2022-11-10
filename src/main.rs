@@ -100,7 +100,7 @@ fn main() {
 
             println!("i_remp: {}", i_remp);
             println!("Iter_conts: {}", iteracion_constructiva);
-            //OBTENEMOS EL ITEM MAS GRANDE
+            //OBTENEMOS UN ITEM ALEATORIAMENTE
             let larger_item:Rec = items[i_remp].clone();
             //OBTENEMOS LOS COMPONENTES DE POSICION DEL ITEM DESDE LA SOLUCIÓN
             

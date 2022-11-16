@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::*;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Instancia{
     pub archivo: String,
     pub contenido: String,

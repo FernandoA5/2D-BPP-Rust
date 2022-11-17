@@ -11,6 +11,8 @@ use std::io::prelude::*;
 use std::time::{Instant};
 const VERBOSE:bool = true;
 const ALPHA: f64 = 0.6;
+
+//QUIZÁ SEA MEJOR IDEA AÑADIR EL ID COMO PROPIEDAD DEL ITEM. ESO PODRÍA CAMBIAR BASTANTE TODO El CÓDIGO, PERO PIENSO ES LA MEJOR FORMA PARA EVITAR TANTOS PARCHES RESPECTO A IDENTIFICAR CADA ITEM
 fn main() {
     loop{
         //EMPEZAMOS CON LA HEURÍSTICA CONTRUCTIVA
@@ -77,6 +79,7 @@ fn heuristica_aleatoria(){
 fn obtener_items_encima_del_umbral(lista_items: &Vec<Rec>, umbral: f64, lista_indices_items: &Vec<usize>) -> (Vec<Rec>, Vec<usize>){
     let mut nueva_lista_items: Vec<Rec> = Vec::new(); //INICIALIZAMOS LA LISTA DE ITEMS SOBRE EL UMBRAL
     let mut lista_id_items_umbral: Vec<usize> = Vec::new(); //INICIALIZAMOS LA LISTA DE SUS IDs
+    let mut lista_id_real_items: Vec<usize> = Vec::new();
     let mut contador: i32 = 0;
     for item in lista_items{
         contador+=1; //EL CONTADOR DEFINIRÁ EL ID

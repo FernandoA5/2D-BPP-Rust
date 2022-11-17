@@ -10,16 +10,17 @@ use std::io::prelude::*;
 
 use std::time::{Instant};
 const VERBOSE:bool = true;
+const ALPHA: f64 = 0.6;
 fn main() {
     loop{
         //EMPEZAMOS CON LA HEURÍSTICA CONTRUCTIVA
         //std::process::Command::new("clear").status().unwrap();
-        let (mut bins_array, mut lista_soluciones, bins, items, num_inicial, cont_usados, wasted_space, inst) = heuristica_constructiva();
+       // let (mut bins_array, mut lista_soluciones, bins, items, num_inicial, cont_usados, wasted_space, inst) = heuristica_constructiva();
 
         //HAY QUE HACER LA HEURÍSTICA ALEATORIA:
         heuristica_aleatoria();
         //AQUÍ EMPEZAMOS CON LA HEURÍSTICA DE MEJORA
-        heuristica_mejora(&mut bins_array, &mut lista_soluciones, &bins, &items, num_inicial, &cont_usados, &wasted_space, &inst);
+        //heuristica_mejora(&mut bins_array, &mut lista_soluciones, &bins, &items, num_inicial, &cont_usados, &wasted_space, &inst);
          
 }
 fn heuristica_aleatoria(){
@@ -28,13 +29,64 @@ fn heuristica_aleatoria(){
     let now: Instant = Instant::now();
     //(bins.clone(), bins_array, items, lista_soluciones, num_inicial)
     let (bins, mut bins_array, items, mut lista_soluciones, num_inicial): (Vec<Rec>, Vec<Vec<Vec<char>>>, Vec<Rec>, Vec<String>, usize) = obtener_contenedores_items(&contenedores_rec, &items_rec);
+
+    let lista_indices_items: Vec<usize> = obtener_indices_de_items(&items);
     //dmax - alfa (dmax-dmin) Aquí el mientras más cerca de 1 mas greedy, y mientras más cerca de 0 más aleatorio. Y tomamos los mayores al numero obtenido por la formula para elegir uno aleatoriamente
-
+    let mut copia_items: Vec<Rec> = items.clone(); //COPIAMOS LA LISTA ORIGINAL PARA PODER USARLA Y ELIMINAR DE ELLA LOS ITEMS QUE SE VAYAN INCRUSTANDO
     //NECESITAMOS DEFINIR ALFA: la lista de items ya está ordenada en este punto, so:
-    let (max_area_item, min_area_item): (&Rec, &Rec) = (&items[0], &items[items.len()-1]);
+    //AQUÍ DEBERÍA EMPEZAR EL LOOP
+    let gen_sol: bool = true; //ESTO HACE QUE DESPUES DE INSERTAR EL ITEM SE GUARDE SU SOLUCIÓN EN LA LISTA DE SOLUCIONES.
+    let mut items_acomodados: i32 =0;
+    loop{
+        //YA OBTUVIMOS LA LISTA DE INDICES DE LOS ITEMS ORDENADOS ORIGINALES, AHORA, NECESITO VINCULARLOS A LOS ITEMS QUE SE PASAN POR LA FUNCIÓN UMBRAL Y LOS QUE SALEN
 
-    //AQUÍ ES DONDE DIVERGEN LAS HEURÍSTICAS CONSTRUCTIVA Y ALEATORIA:
+        let (max_area_item, min_area_item): (&Rec, &Rec) = (&copia_items[0], &copia_items[copia_items.len()-1]); //ESTO FUNCIONA AHORA QUE LA LISTA INICIAL DE ITEMS ESTÁ INTEGRA, PERO HABRÁ QUE USAR UNA COPIA DE ESA LISTA E IR ELIMINANDO DE ELLA LOS ITEMS INSERTADOS PARA EVITAR REPETICIONES.
 
+        //CALCULEMOS EL UMBRAL. ASUMAMOS ALFA COMO 0.6 PARA MAXIMIZAR (ESTO SERÁ MÁS GREEDY QUE RANDOM).
+        let dmax: f64 = max_area_item.area as f64;
+        let dmin: f64 = min_area_item.area as f64;
+
+        let umbral: f64 = dmax - ((ALPHA) * (dmax-dmin));
+        let (items_sobre_umbral, id_items_sobre_umbral): (Vec<Rec>, Vec<usize>) = obtener_items_encima_del_umbral(&copia_items, umbral, &lista_indices_items);
+        //WELL, AHORA, DE ESOS ITEMS POR ENCIMA DE EL UMBRAL, ELEGIMOS UNO ALEATORIAMENE.
+        //GENERAMOS ALEATORIAMENTE EL ÍNDICE DEL ITEM QUE INCRUSTAREMOS
+        let indice_item_random = if id_items_sobre_umbral.len() > 1 { 
+            rand::thread_rng().gen_range(0..id_items_sobre_umbral.len()-1)
+        } else {0};
+        
+        let mut lista_un_item: Vec<Rec> = Vec::new();
+        
+        if items_sobre_umbral.len() > 0{
+            lista_un_item.push(items_sobre_umbral[indice_item_random].clone());
+        }else{
+            lista_un_item.push(copia_items[items_sobre_umbral.len()].clone())
+        }
+
+        items_acomodados+= colocar_items(&lista_un_item, &bins, &mut bins_array, &mut lista_soluciones, gen_sol, indice_item_random);
+
+        copia_items.remove(indice_item_random);
+        //PODEMOS HACER DOS COSAS, INCRUSTAR EL ITEM AHORA, Y REPETIR TODO EL PROCESO MEDIANTE UN LOOP DESDE LA DEFINICIÓN DE MAX Y MIN AREA ITEMS. O NO INCRUSTAMOS EL ITEM, PERO GENERAMOS UNA LISTA DE ITEMS PARA INCRUSTAR Y LUEGO LO HACEMOS CON EL MÉTODO DE ACOMODAR LLAMADO UNA SOlA VEZ EN LUGAR DE N.
+        if copia_items.len() == 0 {
+            break;
+        }
+    };
+    mostrar_contenedores_llenos(&mut bins_array, &bins);
+    //ESTO TIENE UN PROBLEMA, A LA FUNCIÓN SE LE PASA UN NUMERO INICIAL DESDE EL CUAL ITERAR, SI LA LISTA ESTÁ RANDOMIZADA POR EL PROCESO DE ALFA Y EL UMBRAL, ENTONCES IGNORARÁ LOS IDs REALES DE LOS ITEMS Y LOS ENUMERARÁ DESDE EL NÚMERO INICIAL, SO: DEBEMOS USAR LA PRIMERA OPCION DE INCRUSTARLOS UNO POR UNO.
+    println!("Items_insertados: {}", items_acomodados);
+}
+fn obtener_items_encima_del_umbral(lista_items: &Vec<Rec>, umbral: f64, lista_indices_items: &Vec<usize>) -> (Vec<Rec>, Vec<usize>){
+    let mut nueva_lista_items: Vec<Rec> = Vec::new(); //INICIALIZAMOS LA LISTA DE ITEMS SOBRE EL UMBRAL
+    let mut lista_id_items_umbral: Vec<usize> = Vec::new(); //INICIALIZAMOS LA LISTA DE SUS IDs
+    let mut contador: i32 = 0;
+    for item in lista_items{
+        contador+=1; //EL CONTADOR DEFINIRÁ EL ID
+        if item.area as f64 > umbral{ //SI EL AREA ESTÁ BAJO EL UMBRAL INSERTAMOS EL ITEM EN LA LISTA
+            nueva_lista_items.push(item.clone());
+            lista_id_items_umbral.push(contador as usize);
+        }
+        else{ break } //COMO ESTÁ ORDENADA LA LISTA DE ITEMS, CUANDO UNO NO CUMPLA LA CONDICIÓN, EL RESTO TAMPOCO LO HARÁ.
+    }
+    (nueva_lista_items, lista_id_items_umbral) //RETORNAMOS LA LISTA DE ITEMS Y SUS IDs
 }
 fn heuristica_constructiva() -> (Vec<Vec<Vec<char>>>, Vec<String>, Vec<Rec>, Vec<Rec>, usize, i32, i32, Instancia){
     println!("\nIMPLEMENTACIÓN 2D BPP");
@@ -76,11 +128,9 @@ fn heuristica_mejora(bins_array: &mut Vec<Vec<Vec<char>>>, lista_soluciones: &mu
             //OBTENEMOS UN ITEM ALEATORIAMENTE
             let larger_item:Rec = items[i_remp].clone();
             //OBTENEMOS LOS COMPONENTES DE POSICION DEL ITEM DESDE LA SOLUCIÓN
-            
             let (n_item, i_contenedor, i_contenedor_i32, fila, col) = obtener_datos_de_solucion(lista_soluciones, i_remp);
             //MOVEMOS EL PRIMER ITEM Y RESETEAMOS EL ESPACIO A 0s
             let _caracter = calcular_caracter_de_item(n_item-1);
-
             
             //LIMPIAMOS LOS INDICES DEL ITEM ALEATORIO, PARA QUE ESTÉN EN 0s
             print!("Cleaning:");
@@ -153,6 +203,13 @@ fn heuristica_mejora(bins_array: &mut Vec<Vec<Vec<char>>>, lista_soluciones: &mu
         println!("Tiempo: {:?}", new_improve_heuristic_now.duration_since(improve_heuristic_now));
 
 }   
+}
+fn obtener_indices_de_items(items: &Vec<Rec>)-> Vec<usize>{
+    let mut lista_indices: Vec<usize> = Vec::new();
+    for i in 0..items.len(){
+        lista_indices.push(i);
+    }
+    lista_indices
 }
 fn obtener_contenedores_items(contenedores_rec: &Vec<Rec>, items_rec: &Vec<Rec>, )->(Vec<Rec>, Vec<Vec<Vec<char>>>, Vec<Rec>, Vec<String>, usize){
     //LOS CONTENEDORES SE OBTIENEN A PARTIR DE LA INSTANCIA

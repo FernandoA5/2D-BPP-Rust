@@ -57,14 +57,16 @@ fn heuristica_aleatoria(){
         } else {0};
         
         let mut lista_un_item: Vec<Rec> = Vec::new();
-        
+        let mut num_inicial:usize;
         if items_sobre_umbral.len() > 0{
             lista_un_item.push(items_sobre_umbral[indice_item_random].clone());
+            num_inicial = items_sobre_umbral[indice_item_random].id as usize;
         }else{
-            lista_un_item.push(copia_items[items_sobre_umbral.len()].clone())
+            lista_un_item.push(copia_items[items_sobre_umbral.len()].clone());
+            num_inicial=copia_items[items_sobre_umbral.len()].id as usize;
         }
-
-        items_acomodados+= colocar_items(&lista_un_item, &bins, &mut bins_array, &mut lista_soluciones, gen_sol, indice_item_random);
+        
+        items_acomodados+= colocar_items(&lista_un_item, &bins, &mut bins_array, &mut lista_soluciones, gen_sol, num_inicial);
 
         copia_items.remove(indice_item_random);
         //PODEMOS HACER DOS COSAS, INCRUSTAR EL ITEM AHORA, Y REPETIR TODO EL PROCESO MEDIANTE UN LOOP DESDE LA DEFINICIÓN DE MAX Y MIN AREA ITEMS. O NO INCRUSTAMOS EL ITEM, PERO GENERAMOS UNA LISTA DE ITEMS PARA INCRUSTAR Y LUEGO LO HACEMOS CON EL MÉTODO DE ACOMODAR LLAMADO UNA SOlA VEZ EN LUGAR DE N.
@@ -226,6 +228,7 @@ fn obtener_contenedores_items(contenedores_rec: &Vec<Rec>, items_rec: &Vec<Rec>,
     }
     //ORDENAR ITEMS DE MAYOR A MENOR
     ordenar_items(&mut items);
+    asignar_id_items(&mut items);
     if VERBOSE == true{
         println!("Ordenando items...");
         imprimir_items(&items);
@@ -249,6 +252,7 @@ fn variables_de_instancia() -> (Vec<Rec>, Vec<Rec>, Instancia){
         //LOS CONVERTIMOS EN RECTANGULOS
         for (alto, ancho) in items_instancia {
             let mut rec = Rec{
+                id:0, //POR DEFECTO LA ID SERÁ 0, se asignará despues de ordenar.
                 alto: alto,
                 ancho: ancho,
                 area: 0
@@ -262,6 +266,7 @@ fn variables_de_instancia() -> (Vec<Rec>, Vec<Rec>, Instancia){
         //LOS CONVERTIMOS EN RECTÁNGULOS
         for (alto, ancho) in contenedores_instancia {
             let mut rec = Rec{
+                id: 0,
                 alto,
                 ancho,
                 area: 0
@@ -583,6 +588,13 @@ fn ordenar_items(items: &mut Vec<Rec>){
                 items[i]=aux.clone();
             }
         }
+    }
+}
+fn asignar_id_items(items: &mut Vec<Rec>){
+    let mut contador = 0;
+    for item in items{
+        item.id=contador;
+        contador+=1;
     }
 }
 fn imprimir_items(items: &Vec<Rec>){

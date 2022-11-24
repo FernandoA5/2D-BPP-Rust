@@ -10,29 +10,65 @@ use std::io::prelude::*;
 
 use std::time::{Instant};
 const VERBOSE:bool = true;
-const ALPHA: f64 = 0.6;
+const ALPHA: f64 = 0.7;
 
 //QUIZÁ SEA MEJOR IDEA AÑADIR EL ID COMO PROPIEDAD DEL ITEM. ESO PODRÍA CAMBIAR BASTANTE TODO El CÓDIGO, PERO PIENSO ES LA MEJOR FORMA PARA EVITAR TANTOS PARCHES RESPECTO A IDENTIFICAR CADA ITEM
 fn main() {
-    loop{
+    let (mut mejor_sol, mut mejor_cont_usados, mut mejor_wasted_space, mut mejor_bin_matrix): (Vec<String>, i32, i32, Vec<Vec<Vec<char>>>) = (Vec::new(), 0, 0, Vec::new());
+    let mut global_bins: Vec<Rec> = Vec::new();
+    let mut global_iter = 0;
+    let mut solucion: String= String::new();
+    let (contenedores_rec, items_rec, inst):(Vec<Rec>, Vec<Rec>, Instancia) =variables_de_instancia();
+    let global_now: Instant = Instant::now();
+    
+    while global_iter < 120{
         //EMPEZAMOS CON LA HEURÍSTICA CONTRUCTIVA
         //std::process::Command::new("clear").status().unwrap();
-       // let (mut bins_array, mut lista_soluciones, bins, items, num_inicial, cont_usados, wasted_space, inst) = heuristica_constructiva();
-
+        //SI EL ALGORÍTMO YA SE EJECUTÓ UNA VEZ, NO NECESITAMOS EJECUTAR DE NUEVO LA HEURÍSTICA CONSTRUCTIVA
+        if mejor_sol.len() == 0{
+            let (bins_array, lista_soluciones, bins, _items, _num_inicial, cont_usados, wasted_space, _inst) = heuristica_constructiva(&contenedores_rec, &items_rec, &inst);
+            global_bins=bins.clone();
+                if mejor_cont_usados == 0 && mejor_wasted_space == 0 { //ESTO SIGNIFICA QUE AUN NO SE REGISTRA NINGUN SCORE (SOLO SE EJECUTARÁ UNA VEZ)
+                solucion = "Constructiva".to_string();
+                (mejor_sol, mejor_cont_usados, mejor_wasted_space, mejor_bin_matrix) = (lista_soluciones, cont_usados, wasted_space, bins_array.clone()) //REGISTRAMOS COMO MEJOR SCORE EL DE LA HEURÍSTICA CONSTRUCTIVA
+            }
+        }
+        
         //HAY QUE HACER LA HEURÍSTICA ALEATORIA:
-        heuristica_aleatoria();
+        let (mut bins_array, mut lista_soluciones, bins, items, num_inicial, cont_usados, wasted_space, inst)= heuristica_aleatoria(&contenedores_rec, &items_rec, &inst);
+        if mejor_cont_usados > cont_usados || mejor_wasted_space > wasted_space {
+            solucion = "Aleatoria".to_string();
+            println!("Contenedores_usados: {}, Espacio Desperdiciado: {} vs Contenedores_usados_iniciales: {}. Espacio Desperdiciado inicial: {}", cont_usados, wasted_space, mejor_cont_usados, mejor_wasted_space);
+            (mejor_cont_usados, mejor_wasted_space, mejor_bin_matrix) = (cont_usados, wasted_space, bins_array.clone());
+            mejor_sol = lista_soluciones.clone();
+
+        }
         //AQUÍ EMPEZAMOS CON LA HEURÍSTICA DE MEJORA
-        //heuristica_mejora(&mut bins_array, &mut lista_soluciones, &bins, &items, num_inicial, &cont_usados, &wasted_space, &inst);
-         
+        heuristica_mejora(&mut bins_array, &mut lista_soluciones, &bins, &items, num_inicial, &cont_usados, &wasted_space, &inst); 
+
+        if mejor_cont_usados > cont_usados || mejor_wasted_space > wasted_space {
+            solucion = "Mejora".to_string();
+            println!("Contenedores_usados: {}, Espacio Desperdiciado: {} vs Contenedores_usados_iniciales: {}. Espacio Desperdiciado inicial: {}", cont_usados, wasted_space, mejor_cont_usados, mejor_wasted_space);
+            (mejor_cont_usados, mejor_wasted_space, mejor_bin_matrix) = (cont_usados, wasted_space, bins_array.clone());
+        }
+        global_iter+=1;
+    }
+    //MOSTRAMOS LA MEJOR SOLUCIÓN
+    println!("Mejor Solución {}:\nContenedores Usados: {}, Espacio Desperdiciado: {}", solucion,mejor_cont_usados, mejor_wasted_space);
+    for sol in mejor_sol{
+        //print!("{}", sol);
+        guardar_soluciones_en_fichero(&inst, 1, &sol);
+    }
+    mostrar_contenedores_llenos(&mut mejor_bin_matrix, &global_bins);
+    let new_now = Instant::now();
+    println!("Tiempo Total de Multi-Start: {:?}", new_now.duration_since(global_now));
 }
-fn heuristica_aleatoria(){
+fn heuristica_aleatoria(contenedores_rec: &Vec<Rec>, items_rec: &Vec<Rec>, inst: &Instancia)->(Vec<Vec<Vec<char>>>, Vec<String>, Vec<Rec>, Vec<Rec>, usize, i32, i32, Instancia){
     //LEEMOS LA INSTANCIA
-    let (contenedores_rec, items_rec, inst): (Vec<Rec>, Vec<Rec>, Instancia) = variables_de_instancia();
     let now: Instant = Instant::now();
     //(bins.clone(), bins_array, items, lista_soluciones, num_inicial)
     let (bins, mut bins_array, items, mut lista_soluciones, num_inicial): (Vec<Rec>, Vec<Vec<Vec<char>>>, Vec<Rec>, Vec<String>, usize) = obtener_contenedores_items(&contenedores_rec, &items_rec);
 
-    let lista_indices_items: Vec<usize> = obtener_indices_de_items(&items);
     //dmax - alfa (dmax-dmin) Aquí el mientras más cerca de 1 mas greedy, y mientras más cerca de 0 más aleatorio. Y tomamos los mayores al numero obtenido por la formula para elegir uno aleatoriamente
     let mut copia_items: Vec<Rec> = items.clone(); //COPIAMOS LA LISTA ORIGINAL PARA PODER USARLA Y ELIMINAR DE ELLA LOS ITEMS QUE SE VAYAN INCRUSTANDO
     //NECESITAMOS DEFINIR ALFA: la lista de items ya está ordenada en este punto, so:
@@ -49,7 +85,7 @@ fn heuristica_aleatoria(){
         let dmin: f64 = min_area_item.area as f64;
 
         let umbral: f64 = dmax - ((ALPHA) * (dmax-dmin));
-        let (items_sobre_umbral, id_items_sobre_umbral): (Vec<Rec>, Vec<usize>) = obtener_items_encima_del_umbral(&copia_items, umbral, &lista_indices_items);
+        let (items_sobre_umbral, id_items_sobre_umbral): (Vec<Rec>, Vec<usize>) = obtener_items_encima_del_umbral(&copia_items, umbral);
         //WELL, AHORA, DE ESOS ITEMS POR ENCIMA DE EL UMBRAL, ELEGIMOS UNO ALEATORIAMENE.
         //GENERAMOS ALEATORIAMENTE EL ÍNDICE DEL ITEM QUE INCRUSTAREMOS
         let indice_item_random = if id_items_sobre_umbral.len() > 1 { 
@@ -57,31 +93,33 @@ fn heuristica_aleatoria(){
         } else {0};
         
         let mut lista_un_item: Vec<Rec> = Vec::new();
-        let mut num_inicial:usize;
+        let num_inicial:usize;
         if items_sobre_umbral.len() > 0{
             lista_un_item.push(items_sobre_umbral[indice_item_random].clone());
             num_inicial = items_sobre_umbral[indice_item_random].id as usize;
         }else{
             lista_un_item.push(copia_items[items_sobre_umbral.len()].clone());
-            num_inicial=copia_items[items_sobre_umbral.len()].id as usize;
+            num_inicial = copia_items[items_sobre_umbral.len()].id as usize;
         }
         
         items_acomodados+= colocar_items(&lista_un_item, &bins, &mut bins_array, &mut lista_soluciones, gen_sol, num_inicial);
-
         copia_items.remove(indice_item_random);
         //PODEMOS HACER DOS COSAS, INCRUSTAR EL ITEM AHORA, Y REPETIR TODO EL PROCESO MEDIANTE UN LOOP DESDE LA DEFINICIÓN DE MAX Y MIN AREA ITEMS. O NO INCRUSTAMOS EL ITEM, PERO GENERAMOS UNA LISTA DE ITEMS PARA INCRUSTAR Y LUEGO LO HACEMOS CON EL MÉTODO DE ACOMODAR LLAMADO UNA SOlA VEZ EN LUGAR DE N.
         if copia_items.len() == 0 {
             break;
         }
     };
-    mostrar_contenedores_llenos(&mut bins_array, &bins);
-    //ESTO TIENE UN PROBLEMA, A LA FUNCIÓN SE LE PASA UN NUMERO INICIAL DESDE EL CUAL ITERAR, SI LA LISTA ESTÁ RANDOMIZADA POR EL PROCESO DE ALFA Y EL UMBRAL, ENTONCES IGNORARÁ LOS IDs REALES DE LOS ITEMS Y LOS ENUMERARÁ DESDE EL NÚMERO INICIAL, SO: DEBEMOS USAR LA PRIMERA OPCION DE INCRUSTARLOS UNO POR UNO.
+    let (cont_usados, wasted_space) = contar_contenedores_usados(&mut bins_array, &bins);
+
+    let new_now = Instant::now();
+    println!("Tiempo: {:?}", new_now.duration_since(now));
     println!("Items_insertados: {}", items_acomodados);
+    (bins_array.clone(), lista_soluciones.clone(), bins.clone(), items.clone(), num_inicial, cont_usados, wasted_space, inst.clone())
+
 }
-fn obtener_items_encima_del_umbral(lista_items: &Vec<Rec>, umbral: f64, lista_indices_items: &Vec<usize>) -> (Vec<Rec>, Vec<usize>){
+fn obtener_items_encima_del_umbral(lista_items: &Vec<Rec>, umbral: f64) -> (Vec<Rec>, Vec<usize>){
     let mut nueva_lista_items: Vec<Rec> = Vec::new(); //INICIALIZAMOS LA LISTA DE ITEMS SOBRE EL UMBRAL
     let mut lista_id_items_umbral: Vec<usize> = Vec::new(); //INICIALIZAMOS LA LISTA DE SUS IDs
-    let mut lista_id_real_items: Vec<usize> = Vec::new();
     let mut contador: i32 = 0;
     for item in lista_items{
         contador+=1; //EL CONTADOR DEFINIRÁ EL ID
@@ -93,10 +131,9 @@ fn obtener_items_encima_del_umbral(lista_items: &Vec<Rec>, umbral: f64, lista_in
     }
     (nueva_lista_items, lista_id_items_umbral) //RETORNAMOS LA LISTA DE ITEMS Y SUS IDs
 }
-fn heuristica_constructiva() -> (Vec<Vec<Vec<char>>>, Vec<String>, Vec<Rec>, Vec<Rec>, usize, i32, i32, Instancia){
+fn heuristica_constructiva(contenedores_rec: &Vec<Rec>, items_rec: &Vec<Rec>, inst: &Instancia) -> (Vec<Vec<Vec<char>>>, Vec<String>, Vec<Rec>, Vec<Rec>, usize, i32, i32, Instancia){
     println!("\nIMPLEMENTACIÓN 2D BPP");
         //LEEMOS LA INSTANCIA
-        let (contenedores_rec, items_rec, inst):(Vec<Rec>, Vec<Rec>, Instancia) =variables_de_instancia();
         let now = Instant::now();  
         
         let (bins, mut bins_array, items, mut lista_soluciones, num_inicial): (Vec<Rec>, Vec<Vec<Vec<char>>>, Vec<Rec>, Vec<String>, usize) = obtener_contenedores_items(&contenedores_rec, &items_rec);
@@ -105,7 +142,7 @@ fn heuristica_constructiva() -> (Vec<Vec<Vec<char>>>, Vec<String>, Vec<Rec>, Vec
         println!("Items insertados: {}", items_acomodados);
         //MOSTRAR LO HECHO EN PANTALLA -> PODEMOS IMPRIMIR INDIVIDUALMENTE CADA CONTENEDOR
 
-        let (cont_usados, wasted_space) = mostrar_contenedores_llenos(&mut bins_array, &bins);
+        let (cont_usados, wasted_space) = contar_contenedores_usados(&mut bins_array, &bins);
 
         if (items_acomodados as usize) < items.len() {
             println!("No se pudieron insertar todos los items");
@@ -118,7 +155,7 @@ fn heuristica_constructiva() -> (Vec<Vec<Vec<char>>>, Vec<String>, Vec<Rec>, Vec
 fn heuristica_mejora(bins_array: &mut Vec<Vec<Vec<char>>>, lista_soluciones: &mut Vec<String>, bins: &Vec<Rec>, items: &Vec<Rec>, num_inicial:usize, cont_usados: &i32, wasted_space: &i32, inst: &Instancia){
     let (mut new_cont_usados, mut new_wasted_space): (i32, i32);
         let sol_inicial: Vec<String> = lista_soluciones.clone();
-        let mut bins_array_inicial: Vec<Vec<Vec<char>>> = bins_array.clone();
+        let bins_array_inicial: Vec<Vec<Vec<char>>> = bins_array.clone();
         let improve_heuristic_now = Instant::now();  
         let mut iteracion_constructiva = 0;
         
@@ -180,7 +217,7 @@ fn heuristica_mejora(bins_array: &mut Vec<Vec<Vec<char>>>, lista_soluciones: &mu
             (new_cont_usados, new_wasted_space) = contar_contenedores_usados(bins_array, &bins);
             //CRITERIO DE SALIDA
                 //NECESITAMOS 2 COSAS CONTENEDORES USADOS y ESPACIO DESPERDICIADO
-            if new_cont_usados < *cont_usados || new_wasted_space < *wasted_space || iteracion_constructiva >= 1200{
+            if new_cont_usados < *cont_usados || new_wasted_space < *wasted_space || iteracion_constructiva >= 120{
                 break;
             }
             iteracion_constructiva+=1;
@@ -191,7 +228,7 @@ fn heuristica_mejora(bins_array: &mut Vec<Vec<Vec<char>>>, lista_soluciones: &mu
             println!("Mejor Solución: ");
             for sol in lista_soluciones{
                 println!("{}", sol);
-                guardar_soluciones_en_fichero(&inst, iteracion_constructiva, sol);
+                //guardar_soluciones_en_fichero(&inst, iteracion_constructiva, sol);
             }
             mostrar_contenedores_llenos(bins_array, bins);
         }
@@ -200,22 +237,15 @@ fn heuristica_mejora(bins_array: &mut Vec<Vec<Vec<char>>>, lista_soluciones: &mu
             println!("Mejor Solución: ");
             for sol in sol_inicial{
                 println!("{}", sol);
-                guardar_soluciones_en_fichero(&inst, iteracion_constructiva, &sol);
+                //guardar_soluciones_en_fichero(&inst, iteracion_constructiva, &sol);
             }
-            mostrar_contenedores_llenos(&mut bins_array_inicial, bins);
+            //mostrar_contenedores_llenos(&mut bins_array_inicial, bins);
         }
         let new_improve_heuristic_now = Instant::now(); 
         println!("Tiempo: {:?}", new_improve_heuristic_now.duration_since(improve_heuristic_now));
 
 }   
-}
-fn obtener_indices_de_items(items: &Vec<Rec>)-> Vec<usize>{
-    let mut lista_indices: Vec<usize> = Vec::new();
-    for i in 0..items.len(){
-        lista_indices.push(i);
-    }
-    lista_indices
-}
+
 fn obtener_contenedores_items(contenedores_rec: &Vec<Rec>, items_rec: &Vec<Rec>, )->(Vec<Rec>, Vec<Vec<Vec<char>>>, Vec<Rec>, Vec<String>, usize){
     //LOS CONTENEDORES SE OBTIENEN A PARTIR DE LA INSTANCIA
     let bins: &Vec<Rec> = contenedores_rec;
@@ -535,24 +565,28 @@ fn acomodar(bins: Vec<Rec>, bins_array: &mut Vec<Vec<Vec<char>>>, items: &Vec<Re
 fn contar_contenedores_usados(bins_array: &mut Vec<Vec<Vec<char>>>, bins: &Vec<Rec>) -> (i32, i32){
     let mut cont_usados: i32 = 0;
     let mut wasted_space: i32 =0;
-        for i in 0..bins_array.len(){
+    //OBTENEMOS LA CANTIDAD DE CONTENEDORES USADOS
+    for i in 0..bins_array.len(){ //RECORREMOS LOS CONTENEDORES
         let mut usado: bool = false;
+        //RECORREMOS LAS FILAS DEL CONTENEDOR
         for j in 0..bins[i].alto as usize{
-            if usado == true {break}
+            if usado == true {break} //SI YA ESTÁ USADO NO HAY NECESIDAD DE SEGUIR
+            //RECORREMOS LAS COLUMNAS DEL CONTENEDOR
             for k in 0..bins[i].ancho as usize{
-                if usado == true {break}
+                if usado == true {break} //SI YA ESTÁ USADO NO HAY NECESIDAD DE SEGUIR
                 usado = if bins_array[i][j][k] != char::from_u32(48 as u32).unwrap()
-                { true } else {false}
+                { true } else {false} //IF EL CHAR EN EL INDICE ij ES DISTINTO DE 0 ESTÁ USADO
             }
             
         }
-        cont_usados += if usado == true {1} else {0}
+        cont_usados += if usado == true {1} else {0} //IF EL CONTENEDOR FUE USADO ACTUALIZAMOS EL CONTADOR +1
     }
-    for i in 0..cont_usados as usize{
-        for j in 0..bins[i].alto as usize{
-            for k in 0..bins[i].ancho as usize{
-                if bins_array[i][j][k] == char::from_u32(48 as u32).unwrap(){
-                    wasted_space += 1;
+    //CONTAMOS EL ESPACIO DESPERDICIADO
+    for i in 0..cont_usados as usize{ //RECORREMOS LOS CONTENEDORES ¡USADOS!
+        for j in 0..bins[i].alto as usize{ //RECORREMOS LAS FILAS
+            for k in 0..bins[i].ancho as usize{ //RECORREMOS LAS COLUMNAS
+                if bins_array[i][j][k] == char::from_u32(48 as u32).unwrap(){ //IF EN EL CONTENEDOR i HAY UN ESPACIO en 0 ES UN ESPACIO DESPERDICIADO
+                    wasted_space += 1; //ACTUALIZAMOS EL CONTADOR
                 }
             }
         }
